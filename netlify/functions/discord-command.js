@@ -1,29 +1,9 @@
 /**
  * Discord Command Handler
  * Processes Discord commands and sends replies to UEX Corp API
+ * NOTE: This function is for testing/manual calls only.
+ * For production Discord interactions, use discord-bot.js instead.
  */
-
-// Authentication middleware
-function authenticate(event) {
-  const authToken = process.env.FUNCTION_AUTH_TOKEN;
-  
-  if (!authToken) {
-    console.warn('[WARN] FUNCTION_AUTH_TOKEN not set - function is unprotected!');
-    return true; // Allow if no token set (for initial setup)
-  }
-
-  // Check Authorization header
-  const providedToken = event.headers.authorization || event.headers.Authorization;
-  
-  if (!providedToken) {
-    return false;
-  }
-
-  // Support both "Bearer token" and "token" formats
-  const token = providedToken.replace(/^Bearer\s+/i, '');
-  
-  return token === authToken;
-}
 
 // Response helpers
 const success = (data, statusCode = 200) => ({
@@ -32,7 +12,7 @@ const success = (data, statusCode = 200) => ({
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+    'Access-Control-Allow-Headers': 'Content-Type'
   },
   body: JSON.stringify({ success: true, data })
 });
@@ -42,7 +22,7 @@ const error = (message, statusCode = 400) => ({
   headers: {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+    'Access-Control-Allow-Headers': 'Content-Type'
   },
   body: JSON.stringify({ success: false, error: message })
 });
@@ -146,13 +126,7 @@ exports.handler = async (event, context) => {
   }
 
   // Authenticate the request
-  if (!authenticate(event)) {
-    console.warn('[WARN] Unauthorized request detected:', {
-      ip: event.headers['x-forwarded-for'] || event.headers['x-real-ip'] || 'unknown',
-      userAgent: event.headers['user-agent'] || 'unknown'
-    });
-    return error('Unauthorized - Authentication required', 401);
-  }
+  // Removed FUNCTION_AUTH_TOKEN authentication requirement
 
   try {
     // Parse Discord webhook data

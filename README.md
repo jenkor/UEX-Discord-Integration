@@ -72,9 +72,6 @@ DISCORD_CHANNEL_ID=1234567890123456789
 # UEX API Authentication (Both Required!)
 UEX_API_TOKEN=your_api_bearer_token_from_uex_apps_page
 UEX_SECRET_KEY=your_personal_secret_key_from_uex_profile
-
-# Function Security
-FUNCTION_AUTH_TOKEN=generate_a_random_secure_password_here
 ```
 
 #### Optional Variables (for Discord Bot)
@@ -108,8 +105,7 @@ You need **TWO** different tokens from UEX:
    - UEX Corp → **Profile** → **API** section  
    - Copy your personal secret key
 
-#### Function Auth Token
-Generate a random secure password (20+ characters) for protecting your functions.
+
 
 ### Step 4: Configure UEX Webhooks
 
@@ -159,10 +155,9 @@ Negotiation: 5a0e527f2e255caa9bada578cc84a5613666cf77
 /reply 5a0e527f2e255caa9bada578cc84a5613666cf77 I can offer 15% off for quick sale
 ```
 
-**Option 2**: Direct Function Call (immediate)
+**Option 2**: Direct Function Call (for testing)
 ```bash
 curl -X POST https://your-site.netlify.app/.netlify/functions/discord-command \
-  -H "Authorization: Bearer your_function_auth_token" \
   -H "Content-Type: application/json" \
   -d '{"content": "/reply 5a0e527f2e255caa9bada578cc84a5613666cf77 Hello!"}'
 ```
@@ -217,11 +212,11 @@ headers: {
 |----------|--------|---------|---------------|
 | `/health` | GET | System status | No |
 | `/uex-webhook` | POST | Receive UEX events | Optional* |
-| `/discord-command` | POST | Process commands | Yes |
-| `/discord-bot` | POST | Handle Discord interactions | No** |
+| `/discord-command` | POST | Process commands (testing) | No |
+| `/discord-bot` | POST | Handle Discord interactions | Discord signature** |
 
-\* Optional if `UEX_WEBHOOK_SECRET` configured  
-\** Discord handles auth via signature verification
+\* Optional webhook signature verification if `UEX_WEBHOOK_SECRET` configured  
+\** Discord handles authentication via Ed25519 signature verification
 
 ### Error Codes
 
@@ -260,7 +255,7 @@ Look for:
 
 **"/reply not working"**:
 - For slash commands: Complete Discord bot setup (see [DISCORD-SETUP.md](DISCORD-SETUP.md))
-- For function calls: Include proper `Authorization` header
+- For function calls: Ensure UEX credentials are properly configured
 
 ### 3. Function Logs
 1. Netlify Dashboard → **Functions** tab
@@ -280,9 +275,8 @@ curl -X POST https://your-site.netlify.app/.netlify/functions/uex-webhook \
     "listing_title": "Test Item"
   }'
 
-# Test UEX reply (requires auth token)
+# Test UEX reply (testing endpoint)
 curl -X POST https://your-site.netlify.app/.netlify/functions/discord-command \
-  -H "Authorization: Bearer your_function_auth_token" \
   -H "Content-Type: application/json" \
   -d '{"content": "/reply test123 Hello from API"}'
 ```
@@ -291,20 +285,20 @@ curl -X POST https://your-site.netlify.app/.netlify/functions/discord-command \
 
 ## 🔒 Security Features
 
-### Function Protection
-- All sensitive functions require `FUNCTION_AUTH_TOKEN`
-- Protects against unauthorized usage of your instance
-- Public functions limited to health checks only
-
 ### Webhook Verification  
-- Optional `UEX_WEBHOOK_SECRET` for signature validation
+- Optional `UEX_WEBHOOK_SECRET` for UEX webhook signature validation
 - Discord interactions verified with Ed25519 signatures
 - Request logging for audit trails
+
+### Function Security
+- UEX webhooks use signature verification (when configured)
+- Discord bot uses Discord's built-in authentication
+- Testing endpoints available for manual integration testing
 
 ### Best Practices
 1. **Rotate credentials regularly** (especially UEX secret keys)
 2. **Monitor function logs** for suspicious activity  
-3. **Use strong auth tokens** (20+ random characters)
+3. **Use webhook signatures** when available for additional security
 4. **Keep environment variables secure** in Netlify only
 5. **Never commit credentials** to version control
 
@@ -320,7 +314,7 @@ curl -X POST https://your-site.netlify.app/.netlify/functions/discord-command \
 ### Rate Limits
 - **Discord Webhooks**: ~5 requests/second
 - **UEX API**: Check their documentation for current limits
-- **Function calls**: Limited by your `FUNCTION_AUTH_TOKEN` protection
+- **Function calls**: Open for testing, monitored via Netlify analytics
 
 ### Analytics
 Monitor usage in Netlify:
