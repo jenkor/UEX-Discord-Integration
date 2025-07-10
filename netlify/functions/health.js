@@ -29,6 +29,7 @@ function checkConfiguration() {
   const config = {
     discord_webhook_url: !!process.env.DISCORD_WEBHOOK_URL,
     discord_channel_id: !!process.env.DISCORD_CHANNEL_ID,
+    uex_api_token: !!process.env.UEX_API_TOKEN,
     uex_secret_key: !!process.env.UEX_SECRET_KEY,
     uex_webhook_secret: !!process.env.UEX_WEBHOOK_SECRET,
     discord_bot_token: !!process.env.DISCORD_BOT_TOKEN,
@@ -36,7 +37,7 @@ function checkConfiguration() {
     discord_public_key: !!process.env.DISCORD_PUBLIC_KEY
   };
 
-  const required = ['discord_webhook_url', 'uex_secret_key'];
+  const required = ['discord_webhook_url', 'uex_api_token', 'uex_secret_key'];
   const missing = required.filter(key => !config[key]);
   
   const discordBotVars = ['discord_bot_token', 'discord_guild_id', 'discord_public_key'];
@@ -112,21 +113,23 @@ async function testConnectivity() {
   }
 
   // Test UEX API endpoint (if configured)
+  const uexApiToken = process.env.UEX_API_TOKEN;
   const uexSecretKey = process.env.UEX_SECRET_KEY;
   
-  if (uexSecretKey) {
+  if (uexApiToken && uexSecretKey) {
     try {
-      // Test if the UEX API is reachable
+      // Test if the UEX API is reachable with authentication
       const response = await fetch('https://api.uexcorp.space/2.0/', {
         method: 'HEAD',
         headers: {
+          'Authorization': `Bearer ${uexApiToken}`,
           'User-Agent': 'UEX-Discord-Bot/1.0'
         }
       });
 
       results.uex = { 
         status: 'reachable', 
-        message: `UEX API is reachable (${response.status})` 
+        message: `UEX API is reachable with authentication (${response.status})` 
       };
     } catch (err) {
       results.uex = { 
@@ -135,9 +138,13 @@ async function testConnectivity() {
       };
     }
   } else {
+    const missing = [];
+    if (!uexApiToken) missing.push('UEX_API_TOKEN');
+    if (!uexSecretKey) missing.push('UEX_SECRET_KEY');
+    
     results.uex = { 
       status: 'not_configured', 
-      message: 'UEX secret key not set' 
+      message: `Missing UEX credentials: ${missing.join(', ')}` 
     };
   }
 

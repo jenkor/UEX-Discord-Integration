@@ -53,14 +53,15 @@ async function sendToUEX(negotiationHash, message, secretKey) {
     const response = await fetch('https://api.uexcorp.space/2.0/marketplace_negotiations_messages/', {
       method: 'POST',
       headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.UEX_API_TOKEN}`,
         'secret_key': secretKey,
-        'Content-Type': 'application/x-www-form-urlencoded',
         'User-Agent': 'UEX-Discord-Bot/1.0'
       },
-      body: new URLSearchParams({
+      body: JSON.stringify({
         hash: negotiationHash,
         message: message,
-        is_production: '1'
+        is_production: 1
       })
     });
 
@@ -201,10 +202,14 @@ exports.handler = async (event, context) => {
       const { negotiationHash, message } = parsed;
 
       // Get UEX API configuration
+      const uexApiToken = process.env.UEX_API_TOKEN;
       const uexSecretKey = process.env.UEX_SECRET_KEY;
       
-      if (!uexSecretKey) {
-        const configError = 'UEX API secret key not configured';
+      if (!uexApiToken || !uexSecretKey) {
+        const missing = [];
+        if (!uexApiToken) missing.push('UEX_API_TOKEN');
+        if (!uexSecretKey) missing.push('UEX_SECRET_KEY');
+        const configError = `Missing UEX API configuration: ${missing.join(', ')}`;
         console.error('[ERROR]', configError);
         
         const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL;

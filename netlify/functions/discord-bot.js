@@ -209,8 +209,11 @@ async function handleReplyCommand(interaction) {
 
 async function sendReplyToUEX(hash, message) {
   try {
-    if (!process.env.UEX_SECRET_KEY) {
-      throw new Error('UEX_SECRET_KEY not configured');
+    if (!process.env.UEX_API_TOKEN || !process.env.UEX_SECRET_KEY) {
+      const missing = [];
+      if (!process.env.UEX_API_TOKEN) missing.push('UEX_API_TOKEN');
+      if (!process.env.UEX_SECRET_KEY) missing.push('UEX_SECRET_KEY');
+      throw new Error(`Missing UEX API configuration: ${missing.join(', ')}`);
     }
 
     console.log('[UEX] Sending reply to API');
@@ -218,13 +221,14 @@ async function sendReplyToUEX(hash, message) {
     const response = await fetch('https://api.uexcorp.space/2.0/marketplace_negotiations_messages/', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.UEX_API_TOKEN}`,
         'secret_key': process.env.UEX_SECRET_KEY
       },
-      body: new URLSearchParams({
+      body: JSON.stringify({
         hash: hash,
         message: message,
-        is_production: '1'
+        is_production: 1
       })
     });
 
