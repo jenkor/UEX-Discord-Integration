@@ -166,13 +166,14 @@ async function handleReplyCommand(interaction) {
     const result = await sendReplyToUEX(hash, message);
     
     if (result.success) {
+      const messageInfo = result.messageId ? `\nMessage ID: ${result.messageId}` : '';
       return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 4,
           data: {
-            content: `✅ **Reply Sent Successfully**\n\`\`\`\nNegotiation: ${hash}\nMessage: "${message}"\n\`\`\``,
+            content: `✅ **Reply Sent Successfully**\n\`\`\`\nNegotiation: ${hash}\nMessage: "${message}"${messageInfo}\n\`\`\``,
             flags: 64
           }
         })
@@ -235,13 +236,33 @@ async function sendReplyToUEX(hash, message) {
     const responseText = await response.text();
     console.log('[UEX] API response:', responseText);
 
-    if (responseText === 'ok') {
-      return { success: true };
-    } else {
-      return { 
-        success: false, 
-        error: responseText || `HTTP ${response.status}` 
-      };
+    try {
+      // Try to parse as JSON first
+      const jsonResponse = JSON.parse(responseText);
+      
+      if (jsonResponse.status === 'ok' && jsonResponse.http_code === 200) {
+        const messageId = jsonResponse.data?.id_message;
+        return { 
+          success: true, 
+          messageId: messageId,
+          data: jsonResponse.data 
+        };
+      } else {
+        return { 
+          success: false, 
+          error: jsonResponse.message || `API error: ${jsonResponse.status}` 
+        };
+      }
+    } catch (parseError) {
+      // If not JSON, check for plain text responses
+      if (responseText === 'ok') {
+        return { success: true };
+      } else {
+        return { 
+          success: false, 
+          error: responseText || `HTTP ${response.status}` 
+        };
+      }
     }
 
   } catch (error) {
