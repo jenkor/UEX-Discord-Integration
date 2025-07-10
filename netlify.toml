@@ -3,7 +3,7 @@
   publish = "public"
 
 [functions]
-  # 10 second timeout for all functions
+  # Function timeout in seconds (max 10 for free tier)
   timeout = 10
 
 [dev]
