@@ -31,13 +31,13 @@ async function sendToUEX(negotiationHash, message, secretKey) {
       method: 'POST',
       headers: {
         'secret_key': secretKey,
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
         'User-Agent': 'UEX-Discord-Bot/1.0'
       },
-      body: JSON.stringify({
+      body: new URLSearchParams({
         hash: negotiationHash,
         message: message,
-        is_production: 1  // Set to 1 for production, 0 for testing
+        is_production: '1'  // String for form data
       })
     });
 
