@@ -6,6 +6,12 @@
   # Functions directory configuration
   # Timeout defaults to 10 seconds on free tier
 
+# Uncomment to password protect the entire site
+# [context.production]
+#   [context.production.environment]
+#     BASIC_AUTH_USERNAME = "your_username"
+#     BASIC_AUTH_PASSWORD = "your_password"
+
 [dev]
   # Local development settings
   functions = "netlify/functions"

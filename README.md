@@ -1,6 +1,6 @@
 # UEX-Discord Integration (Netlify)
 
-A **completely free** serverless solution for two-way communication between UEX Corp marketplace and Discord using Netlify Functions.
+**Serverless functions** for two-way communication between UEX Corp marketplace and Discord. Deploy your own instance for free on Netlify.
 
 ## 🚀 Features
 
