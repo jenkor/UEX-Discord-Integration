@@ -1,0 +1,28 @@
+{
+  "name": "uex-discord-integration",
+  "version": "1.0.0",
+  "description": "Free serverless integration between UEX Corp marketplace and Discord",
+  "main": "index.js",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo 'No build step required'",
+    "deploy": "netlify deploy --prod",
+    "test": "node --test"
+  },
+  "keywords": [
+    "uex",
+    "discord",
+    "webhook",
+    "netlify",
+    "serverless"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "netlify-cli": "^17.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+} 
