@@ -4,12 +4,29 @@
 
 ## 🚀 Features
 
-- 🔔 **Instant Notifications**: UEX messages appear immediately in Discord
-- 💬 **Reply from Discord**: Use `/reply` commands to respond directly to UEX
+- 🔔 **Instant Notifications**: UEX messages appear immediately in Discord ✅ *Works immediately*
+- 💬 **Reply from Discord**: Use `/reply` commands to respond directly to UEX ⚠️ *Requires Discord bot setup*
 - 🆓 **100% Free**: No usage limits, no subscription fees
 - ⚡ **Serverless**: Runs on Netlify's free tier (125,000 requests/month)
 - 🛡️ **Secure**: Your API keys stay in your Netlify environment
 - 📊 **Health Monitoring**: Built-in status checking and error handling
+
+## ⚡ Quick Start Status
+
+After basic setup, you'll have:
+
+**✅ Working immediately:**
+- UEX → Discord notifications (rich embeds with reply instructions)
+- Health monitoring and status checks
+- Function-based reply system (via API calls)
+
+**⚠️ Requires additional Discord bot setup:**
+- `/reply` slash commands directly in Discord
+- Interactive Discord bot responses
+
+**👉 Choose your setup level:**
+- **Basic** (5 minutes): Get UEX notifications in Discord
+- **Advanced** (15 minutes): Add Discord slash commands - see [DISCORD-SETUP.md](DISCORD-SETUP.md)
 
 ## 🔒 **SECURITY FIRST**
 
@@ -99,11 +116,24 @@ Before you begin, you'll need:
    ```
 2. You should see a JSON response with configuration status
 
-### Test the Integration
+### Test UEX → Discord Notifications
 1. Create a negotiation in UEX Corp
 2. Check your Discord channel for notifications
-3. Reply using: `/reply NEGOTIATION_HASH your message here`
-4. Verify the reply appears in UEX
+3. **✅ This should work immediately after setup**
+
+### Test Discord → UEX Replies (Requires Additional Setup)
+
+**⚠️ Important**: Typing `/reply` in Discord **won't work yet** because Discord doesn't know our functions exist!
+
+**Quick Option**: Use manual function call:
+```bash
+curl -X POST https://YOUR-SITE.netlify.app/.netlify/functions/discord-command \
+  -H "Authorization: your_auth_token" \
+  -H "Content-Type: application/json" \
+  -d '{"content":"/reply abc123 Hello World"}'
+```
+
+**Full Option**: Set up Discord bot for `/reply` slash commands - see [DISCORD-SETUP.md](DISCORD-SETUP.md)
 
 ## 📖 Usage
 

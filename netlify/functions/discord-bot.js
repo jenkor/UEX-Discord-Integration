@@ -47,14 +47,25 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Handle slash command or message
-    if (body.type === 2 || body.type === 3) {
+    // Handle slash command interactions (type 2)
+    if (body.type === 2) {
       const commandName = body.data?.name || 'unknown';
-      console.log('[INFO] Discord command received:', commandName);
+      console.log('[INFO] Discord slash command received:', commandName);
 
       if (commandName === 'reply') {
         return await handleReplyCommand(body);
       }
+    }
+
+    // Handle message component interactions (type 3)
+    if (body.type === 3) {
+      console.log('[INFO] Discord component interaction received');
+      // Handle button clicks, select menus, etc. (future feature)
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ type: 4, data: { content: 'Component interactions not yet supported' } })
+      };
     }
 
     // Handle regular message (for text-based /reply commands)
