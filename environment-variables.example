@@ -9,6 +9,9 @@ DISCORD_CHANNEL_ID=YOUR_DISCORD_CHANNEL_ID_HERE
 # UEX API Configuration (Required)
 UEX_SECRET_KEY=your_uex_secret_key_here
 
+# Function Security (HIGHLY Recommended for Production)
+FUNCTION_AUTH_TOKEN=your_random_secure_token_here_32_chars_min
+
 # Webhook Security (Optional but Recommended)
 UEX_WEBHOOK_SECRET=your_webhook_secret_for_signature_validation
 
