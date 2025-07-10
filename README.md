@@ -16,8 +16,8 @@
 **✅ Working Immediately After Setup:**
 - UEX → Discord notifications (rich embeds with negotiation details)
 - Health monitoring and detailed status checks
-- Secure function endpoints with authentication
 - UEX API integration with proper dual authentication
+- Manual testing endpoints for development
 
 **⚠️ Requires Discord Bot Setup:**
 - `/reply` slash commands directly in Discord (see [DISCORD-SETUP.md](DISCORD-SETUP.md))
@@ -29,8 +29,8 @@
 **⚠️ NEVER commit real credentials to GitHub repositories!**
 
 - ✅ All credentials stored securely in Netlify environment variables only
-- ✅ Functions protected with authentication tokens
-- ✅ Webhook signature verification (when configured)
+- ✅ Functions use proper authentication methods (webhook signatures, Discord verification)
+- ✅ No manual tokens required - security handled automatically
 
 ---
 
