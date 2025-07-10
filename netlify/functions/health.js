@@ -30,19 +30,30 @@ function checkConfiguration() {
     discord_webhook_url: !!process.env.DISCORD_WEBHOOK_URL,
     discord_channel_id: !!process.env.DISCORD_CHANNEL_ID,
     uex_secret_key: !!process.env.UEX_SECRET_KEY,
-    uex_webhook_secret: !!process.env.UEX_WEBHOOK_SECRET
+    uex_webhook_secret: !!process.env.UEX_WEBHOOK_SECRET,
+    discord_bot_token: !!process.env.DISCORD_BOT_TOKEN,
+    discord_guild_id: !!process.env.DISCORD_GUILD_ID,
+    discord_public_key: !!process.env.DISCORD_PUBLIC_KEY
   };
 
   const required = ['discord_webhook_url', 'uex_secret_key'];
   const missing = required.filter(key => !config[key]);
+  
+  const discordBotVars = ['discord_bot_token', 'discord_guild_id', 'discord_public_key'];
+  const discordBotMissing = discordBotVars.filter(key => !config[key]);
   
   return {
     configured: config,
     is_valid: missing.length === 0,
     missing_required: missing,
     optional_missing: Object.keys(config).filter(key => 
-      !required.includes(key) && !config[key]
-    )
+      !required.includes(key) && !discordBotVars.includes(key) && !config[key]
+    ),
+    discord_bot: {
+      configured: discordBotMissing.length === 0,
+      missing: discordBotMissing,
+      status: discordBotMissing.length === 0 ? 'ready_for_slash_commands' : 'webhook_notifications_only'
+    }
   };
 }
 
