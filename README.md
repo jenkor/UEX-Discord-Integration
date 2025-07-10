@@ -1,326 +1,387 @@
 # UEX-Discord Integration (Netlify)
 
-**Serverless functions** for two-way communication between UEX Corp marketplace and Discord. Deploy your own instance for free on Netlify.
+**Free serverless solution** for two-way communication between UEX Corp marketplace and Discord. Deploy your own instance with zero subscription fees.
 
-## 🚀 Features
+## 🚀 What You Get
 
-- 🔔 **Instant Notifications**: UEX messages appear immediately in Discord ✅ *Works immediately*
-- 💬 **Reply from Discord**: Use `/reply` commands to respond directly to UEX ⚠️ *Requires Discord bot setup*
-- 🆓 **100% Free**: No usage limits, no subscription fees
-- ⚡ **Serverless**: Runs on Netlify's free tier (125,000 requests/month)
-- 🛡️ **Secure**: Your API keys stay in your Netlify environment
-- 📊 **Health Monitoring**: Built-in status checking and error handling
+- 🔔 **Instant Notifications**: UEX messages appear immediately in Discord with rich formatting
+- 💬 **Discord Replies**: Use `/reply` slash commands to respond directly to UEX negotiations  
+- 🆓 **Completely Free**: No usage limits on this code, runs on Netlify's free tier
+- ⚡ **Serverless**: Auto-scales, no server maintenance required
+- 🛡️ **Secure**: Protected functions, your credentials never leave your environment
+- 📊 **Health Monitoring**: Built-in diagnostics and connectivity testing
 
-## ⚡ Quick Start Status
+## ⚡ Current Status
 
-After basic setup, you'll have:
+**✅ Working Immediately After Setup:**
+- UEX → Discord notifications (rich embeds with negotiation details)
+- Health monitoring and detailed status checks
+- Secure function endpoints with authentication
+- UEX API integration with proper dual authentication
 
-**✅ Working immediately:**
-- UEX → Discord notifications (rich embeds with reply instructions)
-- Health monitoring and status checks
-- Function-based reply system (via API calls)
+**⚠️ Requires Discord Bot Setup:**
+- `/reply` slash commands directly in Discord (see [DISCORD-SETUP.md](DISCORD-SETUP.md))
 
-**⚠️ Requires additional Discord bot setup:**
-- `/reply` slash commands directly in Discord
-- Interactive Discord bot responses
+**👤 Deploy Time: ~10 minutes for full setup**
 
-**👉 Choose your setup level:**
-- **Basic** (5 minutes): Get UEX notifications in Discord
-- **Advanced** (15 minutes): Add Discord slash commands - see [DISCORD-SETUP.md](DISCORD-SETUP.md)
+## 🔒 Security First
 
-## 🔒 **SECURITY FIRST**
+**⚠️ NEVER commit real credentials to GitHub repositories!**
 
-**⚠️ CRITICAL: Never commit real credentials to GitHub!**
+- ✅ All credentials stored securely in Netlify environment variables only
+- ✅ Functions protected with authentication tokens
+- ✅ Webhook signature verification (when configured)
 
-- ✅ Real credentials go **ONLY** in Netlify environment variables
-- ✅ Use `environment-variables.example` as a template
-- ✅ Keep your `.env` file in `.gitignore` (never commit it)
+---
 
 ## 📋 Prerequisites
 
-Before you begin, you'll need:
+1. **GitHub Account** - For repository hosting
+2. **Netlify Account** - Free tier at [netlify.com](https://netlify.com)
+3. **Discord Server** - With admin permissions to create webhooks
+4. **UEX Corp Account** - With API access and an active secret key
 
-1. **GitHub Account**: For version control and Netlify deployment
-2. **Netlify Account**: Sign up free at [netlify.com](https://netlify.com)
-3. **Discord Server**: With a channel for notifications
-4. **UEX Corp Account**: With API access enabled
+---
 
-## 🛠️ Quick Setup
+## 🛠️ Setup Guide
 
 ### Step 1: Deploy to Netlify
 
-#### Connect Repository
-1. Push this code to your GitHub repository
-2. Log into [Netlify](https://netlify.com)
-3. Click **New site from Git**
-4. Choose **GitHub** and select your repository
-5. Build settings:
-   - **Build command**: `echo "No build required"`
-   - **Publish directory**: `public`
-6. Click **Deploy site**
+1. **Fork/Clone this repository** to your GitHub account
+2. **Connect to Netlify**:
+   - Log into [Netlify](https://netlify.com)
+   - Click **New site from Git** → **GitHub**
+   - Select your forked repository
+   - Build settings: 
+     - Build command: `echo "Static site"`
+     - Publish directory: `public`
+   - Click **Deploy site**
 
-#### Configure Environment Variables
-1. In Netlify, go to **Site settings** → **Environment variables**
-2. Add these variables with YOUR actual values:
+3. **Note your site URL**: `https://your-site-name.netlify.app`
 
-   ```bash
-   # Required Variables - REPLACE WITH YOUR ACTUAL VALUES
-   DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN
-   DISCORD_CHANNEL_ID=YOUR_DISCORD_CHANNEL_ID_HERE
-   UEX_SECRET_KEY=your_uex_secret_key_here
-   
-   # Optional Variables
-   UEX_WEBHOOK_SECRET=your_webhook_secret_here
-   ```
+### Step 2: Configure Environment Variables
 
-3. **Redeploy** the site after adding variables
+Go to **Site settings** → **Environment variables** in Netlify and add:
 
-### Step 2: Get Your Credentials Safely
-
-#### Discord Setup
-1. In your Discord server, right-click the target channel
-2. Select **Edit Channel** → **Integrations** → **Create Webhook**
-3. Name it "UEX Notifier" and copy the webhook URL
-4. **Add to Netlify environment variables ONLY** (never commit to git)
-
-#### UEX API Setup
-1. Log into your UEX Corp account
-2. Go to **Account Settings** → **API** section  
-3. Copy your **Secret Key**
-4. **Add to Netlify environment variables ONLY** (never commit to git)
-
-### Step 3: Configure UEX Webhooks
-
-1. In UEX Corp, go to **Webhooks** settings
-2. Add these webhook URLs:
-
-   **Negotiation Started:**
-   ```
-   https://YOUR-SITE.netlify.app/.netlify/functions/uex-webhook
-   ```
-
-   **Negotiation Replied:**
-   ```
-   https://YOUR-SITE.netlify.app/.netlify/functions/uex-webhook
-   ```
-
-3. Replace `YOUR-SITE` with your actual Netlify site name
-4. **Activate** both webhooks
-
-## 🧪 Testing
-
-### Verify Deployment
-1. Visit your health check endpoint:
-   ```
-   https://YOUR-SITE.netlify.app/.netlify/functions/health
-   ```
-2. You should see a JSON response with configuration status
-
-### Test UEX → Discord Notifications
-1. Create a negotiation in UEX Corp
-2. Check your Discord channel for notifications
-3. **✅ This should work immediately after setup**
-
-### Test Discord → UEX Replies (Requires Additional Setup)
-
-**⚠️ Important**: Typing `/reply` in Discord **won't work yet** because Discord doesn't know our functions exist!
-
-**Quick Option**: Use manual function call:
+#### Required Variables
 ```bash
-curl -X POST https://YOUR-SITE.netlify.app/.netlify/functions/discord-command \
-  -H "Authorization: your_auth_token" \
-  -H "Content-Type: application/json" \
-  -d '{"content":"/reply abc123 Hello World"}'
+# Discord Configuration
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_TOKEN
+DISCORD_CHANNEL_ID=1234567890123456789
+
+# UEX API Authentication (Both Required!)
+UEX_API_TOKEN=your_api_bearer_token_from_uex_apps_page
+UEX_SECRET_KEY=your_personal_secret_key_from_uex_profile
+
+# Function Security
+FUNCTION_AUTH_TOKEN=generate_a_random_secure_password_here
 ```
 
-**Full Option**: Set up Discord bot for `/reply` slash commands - see [DISCORD-SETUP.md](DISCORD-SETUP.md)
+#### Optional Variables (for Discord Bot)
+```bash
+DISCORD_BOT_TOKEN=your_discord_bot_token
+DISCORD_GUILD_ID=your_discord_server_id  
+DISCORD_PUBLIC_KEY=your_discord_app_public_key
+```
+
+#### Optional Webhook Security
+```bash
+UEX_WEBHOOK_SECRET=your_webhook_signing_secret
+```
+
+### Step 3: Get Your Credentials
+
+#### Discord Webhook
+1. In Discord, right-click your target channel → **Edit Channel**
+2. **Integrations** → **Webhooks** → **Create Webhook**
+3. Name: "UEX Notifications", copy the webhook URL
+4. For Channel ID: Right-click channel → **Copy Channel ID** (enable Developer Mode first)
+
+#### UEX API Credentials  
+You need **TWO** different tokens from UEX:
+
+1. **API Token** (Bearer Token):
+   - UEX Corp → **My Apps** section
+   - Copy the Bearer token for API access
+
+2. **Secret Key** (Personal Key):
+   - UEX Corp → **Profile** → **API** section  
+   - Copy your personal secret key
+
+#### Function Auth Token
+Generate a random secure password (20+ characters) for protecting your functions.
+
+### Step 4: Configure UEX Webhooks
+
+1. In UEX Corp, go to webhook settings
+2. Add webhook URL for **negotiation events**:
+   ```
+   https://your-site-name.netlify.app/.netlify/functions/uex-webhook
+   ```
+3. **Activate** the webhook
+
+### Step 5: Test Your Setup
+
+1. **Health Check**: Visit `https://your-site-name.netlify.app/.netlify/functions/health`
+   - Should show `"status": "healthy"` 
+   - All required variables marked as `true`
+   - Connectivity tests showing `"healthy"` or `"reachable"`
+
+2. **Test Notification**: Create a negotiation in UEX Corp
+   - Should appear in Discord within seconds
+   - Rich embed format with reply instructions
+
+---
 
 ## 📖 Usage
 
-### Receiving Notifications
-When someone starts a negotiation or replies in UEX, you'll see:
+### Discord Notifications
+
+When UEX negotiations happen, you'll see rich Discord messages:
 
 ```
 🔔 New UEX Message
 Polaris - LTI Package
 
-👤 From: TraderName
-📝 Message: "Interested in this package, what's your best price?"
+👤 From: TraderName  
+📝 Message: "What's your best price for immediate purchase?"
 
-💬 Reply Command
-/reply abc123def your message here
+💬 To Reply:
+/reply 5a0e527f Hello! I can do 15% off for immediate payment
 
-Negotiation: abc123def
+Negotiation: 5a0e527f2e255caa9bada578cc84a5613666cf77
 ```
 
-### Sending Replies
-To reply from Discord:
+### Replying from Discord
 
+**Option 1**: Discord Slash Commands (requires bot setup)
 ```
-/reply abc123def I can offer 15% off for immediate payment
+/reply 5a0e527f2e255caa9bada578cc84a5613666cf77 I can offer 15% off for quick sale
 ```
 
-You'll get a confirmation:
+**Option 2**: Direct Function Call (immediate)
+```bash
+curl -X POST https://your-site.netlify.app/.netlify/functions/discord-command \
+  -H "Authorization: Bearer your_function_auth_token" \
+  -H "Content-Type: application/json" \
+  -d '{"content": "/reply 5a0e527f2e255caa9bada578cc84a5613666cf77 Hello!"}'
+```
 
+### Success Response
 ```
 ✅ Reply Sent Successfully
-Reply sent to negotiation: abc123def
-Message: "I can offer 15% off for immediate payment"
+Negotiation: 5a0e527f2e255caa9bada578cc84a5613666cf77
+Message: "Hello!"
+Message ID: 220096
 ```
-
-## 🔧 API Details
-
-### UEX API Integration
-- **Endpoint**: `https://api.uexcorp.space/2.0/marketplace_negotiations_messages/`
-- **Method**: POST
-- **Authentication**: `secret_key` header
-- **Parameters**:
-  - `hash`: Negotiation hash from webhook
-  - `message`: Your reply text
-  - `is_production`: 1 (production mode)
-
-### Discord Integration
-- **Webhooks**: For sending notifications to Discord
-- **Embeds**: Rich message formatting with colors and fields
-- **Commands**: Simple `/reply` text parsing
-
-### Response Handling
-UEX API returns text responses:
-- `ok`: Success
-- `negotiation_not_found`: Invalid hash
-- `negotiation_closed`: Can't reply to closed negotiation
-- `missing_message`: Empty message
-- `invalid_secret_key`: Authentication failed
-
-## 🐛 Troubleshooting
-
-### Check Function Logs
-1. Go to Netlify **Site overview** → **Functions**
-2. Click on any function to see recent logs
-3. Look for error messages or failed requests
-
-### Common Issues
-
-**Discord notifications not appearing:**
-- Verify `DISCORD_WEBHOOK_URL` is correct
-- Check UEX webhook configuration
-- Look at function logs for errors
-
-**Replies not sending to UEX:**
-- Verify `UEX_SECRET_KEY` is correct
-- Check if secret key has proper permissions
-- Test the health endpoint for connectivity
-
-**Function timeout errors:**
-- Functions have 10-second timeout
-- Large responses may need optimization
-- Check for infinite loops or blocking calls
-
-### Manual Testing
-
-Test individual functions locally:
-
-```bash
-# Install Netlify CLI
-npm install -g netlify-cli
-
-# Start local development
-netlify dev
-
-# Test webhook function
-curl -X POST http://localhost:8888/.netlify/functions/uex-webhook \
-  -H "Content-Type: application/json" \
-  -d '{"negotiation_hash":"test123","last_message":"Hello","sender_username":"TestUser","listing_title":"Test Listing"}'
-```
-
-## 📊 Monitoring
-
-### Health Checks
-Monitor your integration at:
-```
-https://YOUR-SITE.netlify.app/.netlify/functions/health
-```
-
-### Netlify Analytics
-- View function usage in Netlify dashboard
-- Monitor deployment history
-- Track error rates and response times
-
-### Discord Logging
-All function activity is logged to Netlify, including:
-- Webhook receptions from UEX
-- Discord message sending
-- API calls to UEX
-- Error conditions
-
-## 🔒 Security
-
-### Best Practices
-1. **Never commit credentials to git/GitHub**
-2. **Use webhook signatures** for validation (set `UEX_WEBHOOK_SECRET`)
-3. **Monitor function logs** for suspicious activity
-4. **Limit Discord permissions** to minimum required
-5. **Rotate API keys regularly**
-6. **Keep environment variables secure in Netlify only**
-
-### Rate Limiting
-- Netlify: 125,000 function invocations/month (free tier)
-- Discord: ~5 requests/second (webhook)
-- UEX: Check their API documentation for limits
-
-## 🆙 Upgrades
-
-### Netlify Pro Features
-If you need more capacity:
-- **Pro Plan**: $19/month for 2M function invocations
-- **Background Functions**: For long-running tasks
-- **Edge Functions**: For faster response times
-
-### Additional Features
-This integration can be extended with:
-- **Web Dashboard**: For managing negotiations
-- **Database Storage**: For persistent data
-- **Email Notifications**: As backup to Discord
-- **Mobile App**: Using same API endpoints
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature-name`
-3. Make your changes and test thoroughly
-4. **Never commit real credentials**
-5. Submit a pull request with detailed description
-
-## 📄 License
-
-MIT License - Feel free to use and modify for your needs.
-
-## 🆘 Support
-
-Having issues? Here's how to get help:
-
-1. **Check the health endpoint** first
-2. **Review function logs** in Netlify
-3. **Create an issue** in this repository with:
-   - Error messages from logs
-   - Steps to reproduce
-   - Your configuration (**without sensitive data**)
 
 ---
 
-## 📚 API Endpoints
+## 🔧 Technical Details
 
-Your deployed integration provides these endpoints:
+### UEX API Integration
 
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/.netlify/functions/uex-webhook` | POST | Receive webhooks from UEX |
-| `/.netlify/functions/discord-command` | POST | Process Discord commands |
-| `/.netlify/functions/health` | GET | Health check and status |
+**Endpoint**: `https://api.uexcorp.space/2.0/marketplace_negotiations_messages/`
 
-## 🔗 Related Links
+**Authentication** (Dual Required):
+```javascript
+headers: {
+  'Authorization': 'Bearer ' + UEX_API_TOKEN,
+  'secret_key': UEX_SECRET_KEY,
+  'Content-Type': 'application/json'
+}
+```
 
-- [Netlify Functions Documentation](https://docs.netlify.com/functions/overview/)
-- [Discord Webhook Guide](https://discord.com/developers/docs/resources/webhook)
-- [UEX Corp API Documentation](https://uexcorp.space/api/documentation/)
-- [Node.js Fetch API](https://nodejs.org/dist/latest-v18.x/docs/api/globals.html#fetch) 
+**Request Format**:
+```json
+{
+  "hash": "negotiation_hash_from_webhook",
+  "message": "Your reply text",
+  "is_production": 1
+}
+```
+
+**Response Format**:
+```json
+{
+  "status": "ok",
+  "http_code": 200,
+  "data": {"id_message": "220096"},
+  "message": ""
+}
+```
+
+### Function Endpoints
+
+| Endpoint | Method | Purpose | Auth Required |
+|----------|--------|---------|---------------|
+| `/health` | GET | System status | No |
+| `/uex-webhook` | POST | Receive UEX events | Optional* |
+| `/discord-command` | POST | Process commands | Yes |
+| `/discord-bot` | POST | Handle Discord interactions | No** |
+
+\* Optional if `UEX_WEBHOOK_SECRET` configured  
+\** Discord handles auth via signature verification
+
+### Error Codes
+
+**UEX API Responses**:
+- `"ok"` → Success, message sent
+- `"negotiation_not_found"` → Invalid hash
+- `"negotiation_closed"` → Cannot reply
+- `"Authentication error"` → Invalid credentials
+
+---
+
+## 🐛 Troubleshooting
+
+### 1. Check Health Status
+Visit: `https://your-site.netlify.app/.netlify/functions/health`
+
+Look for:
+- `"status": "healthy"` 
+- All required environment variables: `true`
+- Connectivity tests: `"healthy"` or `"reachable"`
+
+### 2. Common Issues
+
+**"Missing UEX API configuration"**:
+- Verify both `UEX_API_TOKEN` and `UEX_SECRET_KEY` are set
+- Redeploy site after adding environment variables
+
+**"Authentication error" from UEX**:
+- Check your UEX secret key is current (they expire)
+- Verify API token has proper permissions
+
+**Discord notifications not appearing**:
+- Verify webhook URL is correct
+- Check UEX webhook is activated
+- Review Netlify function logs
+
+**"/reply not working"**:
+- For slash commands: Complete Discord bot setup (see [DISCORD-SETUP.md](DISCORD-SETUP.md))
+- For function calls: Include proper `Authorization` header
+
+### 3. Function Logs
+1. Netlify Dashboard → **Functions** tab
+2. Click function name to view recent executions
+3. Look for errors, timeouts, or authentication failures
+
+### 4. Manual Testing
+
+```bash
+# Test Discord notification
+curl -X POST https://your-site.netlify.app/.netlify/functions/uex-webhook \
+  -H "Content-Type: application/json" \
+  -d '{
+    "negotiation_hash": "test123",
+    "last_message": "Test message", 
+    "sender_username": "TestUser",
+    "listing_title": "Test Item"
+  }'
+
+# Test UEX reply (requires auth token)
+curl -X POST https://your-site.netlify.app/.netlify/functions/discord-command \
+  -H "Authorization: Bearer your_function_auth_token" \
+  -H "Content-Type: application/json" \
+  -d '{"content": "/reply test123 Hello from API"}'
+```
+
+---
+
+## 🔒 Security Features
+
+### Function Protection
+- All sensitive functions require `FUNCTION_AUTH_TOKEN`
+- Protects against unauthorized usage of your instance
+- Public functions limited to health checks only
+
+### Webhook Verification  
+- Optional `UEX_WEBHOOK_SECRET` for signature validation
+- Discord interactions verified with Ed25519 signatures
+- Request logging for audit trails
+
+### Best Practices
+1. **Rotate credentials regularly** (especially UEX secret keys)
+2. **Monitor function logs** for suspicious activity  
+3. **Use strong auth tokens** (20+ random characters)
+4. **Keep environment variables secure** in Netlify only
+5. **Never commit credentials** to version control
+
+---
+
+## 📊 Monitoring & Limits
+
+### Netlify Free Tier
+- **125,000 function invocations/month**
+- **10-second timeout per function**
+- **50MB total deployment size**
+
+### Rate Limits
+- **Discord Webhooks**: ~5 requests/second
+- **UEX API**: Check their documentation for current limits
+- **Function calls**: Limited by your `FUNCTION_AUTH_TOKEN` protection
+
+### Analytics
+Monitor usage in Netlify:
+- Function execution count and duration
+- Error rates and response codes  
+- Deployment history and status
+
+---
+
+## 🆙 Advanced Setup
+
+### Discord Bot Integration
+For full `/reply` slash command support:
+1. Follow [DISCORD-SETUP.md](DISCORD-SETUP.md)
+2. Add Discord bot environment variables
+3. Register slash commands with Discord
+
+### Additional Security
+1. **Enable webhook signatures**:
+   ```bash
+   UEX_WEBHOOK_SECRET=your_signing_secret
+   ```
+
+2. **Restrict function access**:
+   - Use firewall rules in Netlify
+   - Monitor access logs regularly
+
+### Custom Domain
+1. **Netlify Pro**: Add custom domain
+2. **Update UEX webhooks**: Use your custom domain
+3. **SSL**: Automatically provided by Netlify
+
+---
+
+## 🤝 Contributing
+
+1. Fork this repository
+2. Create feature branch: `git checkout -b feature-name`
+3. **Test thoroughly** with your own Netlify deployment
+4. **Never commit real credentials** (use examples only)
+5. Submit pull request with detailed description
+
+---
+
+## 📄 License & Support
+
+**MIT License** - Use freely for personal or commercial projects.
+
+### Getting Help
+1. **Check health endpoint** and function logs first
+2. **Review this README** and [DISCORD-SETUP.md](DISCORD-SETUP.md)
+3. **Create GitHub issue** with:
+   - Health endpoint output (remove sensitive data)
+   - Function logs showing errors
+   - Steps to reproduce issue
+
+### Community
+- **Star this repo** if it helps you!
+- **Share improvements** via pull requests
+- **Report bugs** to help others
+
+---
+
+*Built for UEX Corp traders who want reliable Discord integration without recurring costs. Deploy once, use forever.* 🚀 
