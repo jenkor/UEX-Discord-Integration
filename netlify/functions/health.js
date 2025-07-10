@@ -1,6 +1,7 @@
 /**
  * Health Check Function
  * Provides status information about the UEX-Discord integration
+ * Updated: Trigger redeploy to pick up new environment variables
  */
 
 // Response helpers
