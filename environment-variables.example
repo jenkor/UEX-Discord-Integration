@@ -3,11 +3,11 @@
 # For local development with `netlify dev`, create a .env file with these values
 
 # Discord Configuration (Required)
-DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/1392770793347219476/I0jCr1ax-qAFpQ4hhUjx-ONJrpChXC8ZKdyInEZc6EBDQZhA_QW9yHOpx5iFVh9M88Rq
-DISCORD_CHANNEL_ID=1392770611369218108
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN
+DISCORD_CHANNEL_ID=YOUR_DISCORD_CHANNEL_ID_HERE
 
 # UEX API Configuration (Required)
-UEX_SECRET_KEY=c176bffee5f8c62849889554d173c90d78278a4b
+UEX_SECRET_KEY=your_uex_secret_key_here
 
 # Webhook Security (Optional but Recommended)
 UEX_WEBHOOK_SECRET=your_webhook_secret_for_signature_validation
@@ -20,7 +20,9 @@ DEPLOY_ID=auto-generated-deploy-id
 # Development Configuration (Optional)
 NODE_ENV=development
 
-# Notes:
+# SECURITY NOTES:
+# - NEVER commit real credentials to git/GitHub
+# - Set real values ONLY in Netlify environment variables
 # - The UEX API endpoint is hardcoded: https://api.uexcorp.space/2.0/marketplace_negotiations_messages/
-# - UEX_SECRET_KEY is used in the 'secret_key' header for authentication
+# - UEX_SECRET_KEY goes in the 'secret_key' header for authentication
 # - is_production is set to 1 (production mode) in the functions 

@@ -11,6 +11,14 @@ A **completely free** serverless solution for two-way communication between UEX 
 - 🛡️ **Secure**: Your API keys stay in your Netlify environment
 - 📊 **Health Monitoring**: Built-in status checking and error handling
 
+## 🔒 **SECURITY FIRST**
+
+**⚠️ CRITICAL: Never commit real credentials to GitHub!**
+
+- ✅ Real credentials go **ONLY** in Netlify environment variables
+- ✅ Use `environment-variables.example` as a template
+- ✅ Keep your `.env` file in `.gitignore` (never commit it)
+
 ## 📋 Prerequisites
 
 Before you begin, you'll need:
@@ -36,13 +44,13 @@ Before you begin, you'll need:
 
 #### Configure Environment Variables
 1. In Netlify, go to **Site settings** → **Environment variables**
-2. Add these variables:
+2. Add these variables with YOUR actual values:
 
    ```bash
-   # Required Variables
-   DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/1392770793347219476/I0jCr1ax-qAFpQ4hhUjx-ONJrpChXC8ZKdyInEZc6EBDQZhA_QW9yHOpx5iFVh9M88Rq
-   DISCORD_CHANNEL_ID=1392770611369218108
-   UEX_SECRET_KEY=c176bffee5f8c62849889554d173c90d78278a4b
+   # Required Variables - REPLACE WITH YOUR ACTUAL VALUES
+   DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN
+   DISCORD_CHANNEL_ID=YOUR_DISCORD_CHANNEL_ID_HERE
+   UEX_SECRET_KEY=your_uex_secret_key_here
    
    # Optional Variables
    UEX_WEBHOOK_SECRET=your_webhook_secret_here
@@ -50,7 +58,21 @@ Before you begin, you'll need:
 
 3. **Redeploy** the site after adding variables
 
-### Step 2: Configure UEX Webhooks
+### Step 2: Get Your Credentials Safely
+
+#### Discord Setup
+1. In your Discord server, right-click the target channel
+2. Select **Edit Channel** → **Integrations** → **Create Webhook**
+3. Name it "UEX Notifier" and copy the webhook URL
+4. **Add to Netlify environment variables ONLY** (never commit to git)
+
+#### UEX API Setup
+1. Log into your UEX Corp account
+2. Go to **Account Settings** → **API** section  
+3. Copy your **Secret Key**
+4. **Add to Netlify environment variables ONLY** (never commit to git)
+
+### Step 3: Configure UEX Webhooks
 
 1. In UEX Corp, go to **Webhooks** settings
 2. Add these webhook URLs:
@@ -204,11 +226,12 @@ All function activity is logged to Netlify, including:
 ## 🔒 Security
 
 ### Best Practices
-1. **Rotate API keys** regularly
+1. **Never commit credentials to git/GitHub**
 2. **Use webhook signatures** for validation (set `UEX_WEBHOOK_SECRET`)
 3. **Monitor function logs** for suspicious activity
 4. **Limit Discord permissions** to minimum required
-5. **Keep environment variables** secure
+5. **Rotate API keys regularly**
+6. **Keep environment variables secure in Netlify only**
 
 ### Rate Limiting
 - Netlify: 125,000 function invocations/month (free tier)
@@ -235,7 +258,8 @@ This integration can be extended with:
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature-name`
 3. Make your changes and test thoroughly
-4. Submit a pull request with detailed description
+4. **Never commit real credentials**
+5. Submit a pull request with detailed description
 
 ## 📄 License
 
@@ -250,7 +274,7 @@ Having issues? Here's how to get help:
 3. **Create an issue** in this repository with:
    - Error messages from logs
    - Steps to reproduce
-   - Your configuration (without sensitive data)
+   - Your configuration (**without sensitive data**)
 
 ---
 
