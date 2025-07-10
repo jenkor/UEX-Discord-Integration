@@ -218,13 +218,13 @@ async function sendReplyToUEX(hash, message) {
     const response = await fetch('https://api.uexcorp.space/2.0/marketplace_negotiations_messages/', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'secret_key': process.env.UEX_SECRET_KEY
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.UEX_SECRET_KEY}`
       },
-      body: new URLSearchParams({
+      body: JSON.stringify({
         hash: hash,
         message: message,
-        is_production: '1'
+        is_production: 1
       })
     });
 

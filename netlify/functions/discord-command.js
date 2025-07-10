@@ -53,14 +53,14 @@ async function sendToUEX(negotiationHash, message, secretKey) {
     const response = await fetch('https://api.uexcorp.space/2.0/marketplace_negotiations_messages/', {
       method: 'POST',
       headers: {
-        'secret_key': secretKey,
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${secretKey}`,
         'User-Agent': 'UEX-Discord-Bot/1.0'
       },
-      body: new URLSearchParams({
+      body: JSON.stringify({
         hash: negotiationHash,
         message: message,
-        is_production: '1'  // String for form data
+        is_production: 1
       })
     });
 
