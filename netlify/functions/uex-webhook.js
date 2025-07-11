@@ -80,8 +80,8 @@ async function sendToDiscord(webhookUrl, payload) {
 function formatDiscordMessage(uexData) {
   const {
     negotiation_hash: hash = 'Unknown',
-    last_message: message = 'No message',
-    sender_username: sender = 'Unknown sender',
+    message = 'No message',
+    client_username: sender = 'Unknown sender',
     listing_title: title = 'Unknown listing',
     event_type: eventType = 'negotiation'
   } = uexData;
@@ -158,10 +158,10 @@ exports.handler = async (event, context) => {
     console.log('[INFO] UEX data received:', JSON.stringify(uexData, null, 2));
 
     // Validate required fields
-    const { negotiation_hash: hash, last_message: message } = uexData;
+    const { negotiation_hash: hash, message } = uexData;
     if (!hash || !message) {
       console.warn('[WARN] Missing required fields:', { hash, message });
-      return error('Missing required fields: negotiation_hash, last_message');
+      return error('Missing required fields: negotiation_hash, message');
     }
 
     // Get Discord webhook URL
