@@ -1,26 +1,30 @@
 {
-  "name": "uex-discord-integration",
-  "version": "1.0.0",
-  "description": "Free serverless integration between UEX Corp marketplace and Discord",
-  "main": "index.js",
+  "name": "uex-discord-bot",
+  "version": "2.0.0",
+  "description": "Personal Discord bot for UEX Corp marketplace notifications via DMs",
+  "main": "src/bot.js",
   "scripts": {
-    "dev": "netlify dev",
-    "build": "echo 'No build step required'",
-    "deploy": "netlify deploy --prod",
+    "start": "node src/bot.js",
+    "dev": "nodemon src/bot.js",
     "test": "node --test"
   },
   "keywords": [
     "uex",
     "discord",
-    "webhook",
-    "netlify",
-    "serverless"
+    "bot",
+    "personal",
+    "trading",
+    "notifications"
   ],
-  "author": "Your Name",
+  "author": "UEX Discord Bot",
   "license": "MIT",
-  "dependencies": {},
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "express": "^4.18.2",
+    "dotenv": "^16.3.1"
+  },
   "devDependencies": {
-    "netlify-cli": "^17.0.0"
+    "nodemon": "^3.0.2"
   },
   "engines": {
     "node": ">=18.0.0"

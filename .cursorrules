@@ -1,337 +1,74 @@
-# UEX-Discord Integration Development Rules
+# UEX Personal Discord Bot Development Rules
 
-## Environment Context
-- **OS**: Windows 10/11
-- **IDE**: Cursor with Claude AI integration
-- **Runtime**: Node.js/JavaScript (Netlify Functions)
-- **Platform**: Netlify Serverless Functions
-- **Integration**: UEX Corp API ↔ Discord
-- **MCP Protocol**: Model Context Protocol for AI tool integration
+This document outlines the rules and guidelines for developing the new UEX Personal Discord Bot, as detailed in the `MIGRATION-PLAN.md`. The goal is to create a self-hostable bot that provides UEX notifications via private Direct Messages.
 
-## Project Architecture
-- **Frontend**: Static site (optional dashboard)
-- **Backend**: Netlify Functions (serverless)
-- **Webhooks**: UEX Corp → Netlify Function → Discord
-- **Commands**: Discord → Netlify Function → UEX Corp API
-- **Storage**: Environment variables for secrets
+## 1. Core Goal & Philosophy
 
-## File Structure Preferences
-- Use kebab-case for function files (`uex-webhook.js`, `discord-reply.js`)
-- Use camelCase for JavaScript variables and functions
-- Keep Netlify functions in `netlify/functions/` directory
-- Place shared utilities in `src/utils/` directory
-- Configuration in environment variables
+- **Primary Objective**: Build a Node.js application that any user can easily deploy to a free hosting service.
+- **User-Centric Design**: The bot is for personal use. All notifications must be sent as Direct Messages (DMs) to the user who deployed the bot. No more public channel messages.
+- **Privacy First**: Each bot instance is independent. There is no shared database or infrastructure. All data (API keys, user ID) is stored in the user's own environment variables.
+- **Technology**: The stack is Node.js, `discord.js` v14, `express`, and `dotenv`.
 
-## UEX-Discord Integration Guidelines
+## 2. Architecture
 
-### Webhook Handling
-- UEX Corp sends webhooks for negotiation events
-- Parse JSON payloads with proper error handling
-- Validate webhook signatures for security
-- Handle rate limiting and retry logic
-- Log all webhook events for debugging
+- **Application Type**: A persistent, long-running Node.js server, NOT serverless functions.
+- **Main Components**:
+    1.  **Express Server**: Listens for incoming HTTP requests.
+        - It MUST have a `/health` endpoint for monitoring.
+        - It MUST have a `/webhook/uex` endpoint to receive webhooks from UEX Corp.
+    2.  **Discord.js Client**: Connects to Discord's Gateway to send DMs and handle commands.
+- **Data Flow**:
+    - **Incoming Webhook**: `UEX Corp -> POST /webhook/uex -> Webhook Handler -> Sends DM to User`.
+    - **Outgoing Command**: `User sends DM command -> Discord Gateway -> Command Handler -> UEX API`.
 
-### Discord Integration
-- Use Discord Webhooks for sending notifications
-- Implement Discord Bot for command handling
-- Format messages with embeds for better UX
-- Handle Discord API rate limits
-- Support slash commands and text commands
+## 3. File Structure
 
-### API Communication
-- Use proper authentication headers for UEX API
-- Implement retry logic for failed requests
-- Handle API rate limiting gracefully
-- Validate all input data before API calls
-- Return structured error responses
+Adhere strictly to the following file structure. Do not create files outside of this structure unless specified.
 
-## Netlify Function Development
-
-### Function Architecture
-- Each function should be self-contained
-- Use environment variables for configuration
-- Implement proper CORS headers
-- Return consistent JSON response format
-- Include comprehensive error handling
-
-### Response Format
-```javascript
-// Success response
-{
-  statusCode: 200,
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ success: true, data: result })
-}
-
-// Error response
-{
-  statusCode: 400,
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ success: false, error: message })
-}
+```
+/
+├── src/
+│   ├── bot.js              # Main entry point: Initializes Express and Discord client.
+│   ├── commands/           # Folder for all Discord slash commands.
+│   │   └── *.js            # Each file is a separate command (e.g., reply.js).
+│   ├── handlers/           # Logic for handling external interactions.
+│   │   ├── webhook.js      # Logic for the /webhook/uex endpoint. Parses request, sends DM.
+│   │   └── uex-api.js      # All functions for communicating with the UEX Corp API.
+│   └── utils/              # Shared helper functions.
+│       ├── config.js       # Loads and exports all environment variables using `dotenv`.
+│       └── logger.js       # (Optional) Simple logging utility.
+├── docs/                   # All user-facing documentation.
+├── .env.example            # Template for users to create their .env file.
+├── package.json            # Project dependencies and scripts.
+└── README.md               # Main user guide.
 ```
 
-### Security Best Practices
-- Validate all incoming webhook data
-- Use environment variables for API keys
-- Implement request signature verification
-- Rate limit incoming requests
-- Sanitize all user inputs
+## 4. Coding Standards & Patterns
 
-## MCP Server Integration
+- **Asynchronous Operations**: Use `async/await` for all promises (e.g., Discord API calls, fetching from UEX API).
+- **Modularity**:
+    - Command logic MUST be in its own file within `src/commands/`.
+    - UEX API calls MUST be encapsulated in functions within `src/handlers/uex-api.js`.
+    - Webhook processing logic MUST be in `src/handlers/webhook.js`.
+- **Discord Interactions**:
+    - Use `discord.js` v14 builders for slash commands and embeds.
+    - DMs are sent by fetching the user via `client.users.fetch(config.DISCORD_USER_ID)`.
+- **Error Handling**: Implement `try...catch` blocks for all operations that can fail, especially API calls and webhook processing. Log errors clearly.
 
-### Available MCP Servers
-- **Memory MCP**: For storing negotiation states and user preferences
-- **Playwright MCP**: For testing Discord/UEX web interfaces
-- **Brave Search MCP**: For researching UEX API documentation
-- **Sequential Thinking MCP**: For complex problem-solving workflows
+## 5. Environment Variables
 
-### Memory Management
-- Store active negotiations with timestamps
-- Cache user preferences and settings
-- Track reply history for context
-- Implement data retention policies
+- **Source of Truth**: All configuration and secrets MUST come from environment variables, loaded by `src/utils/config.js`.
+- **No Hardcoding**: Never hardcode API tokens, secrets, or user IDs.
+- **Required Variables**:
+    - `DISCORD_BOT_TOKEN`: The token for the user's personal bot.
+    - `DISCORD_USER_ID`: The user's own Discord ID, for receiving DMs.
+    - `UEX_API_TOKEN`: UEX API key.
+    - `UEX_SECRET_KEY`: UEX API secret.
+    - `UEX_WEBHOOK_SECRET`: For validating incoming webhooks.
+    - `PORT`: The port for the Express server (often set by the hosting platform).
 
-### Testing Strategy
-- Use Playwright MCP for end-to-end testing
-- Test webhook delivery and Discord posting
-- Validate API integration with real endpoints
-- Monitor function performance and errors
+## 6. Deployment & Documentation
 
-## Code Quality Standards
-
-### JavaScript Style
-- Use ES6+ features (async/await, destructuring)
-- Implement proper error boundaries
-- Use TypeScript-style JSDoc comments
-- Follow consistent naming conventions
-- Prefer functional programming patterns
-
-### Dependencies
-- Minimize external dependencies for Netlify
-- Use built-in Node.js modules when possible
-- Pin exact versions in package.json
-- Document all external API dependencies
-
-### Error Handling Pattern
-```javascript
-try {
-  const result = await apiCall();
-  return successResponse(result);
-} catch (error) {
-  console.error('Operation failed:', error);
-  return errorResponse(error.message);
-}
-```
-
-## Environment Configuration
-
-### Required Environment Variables
-```bash
-# Discord Configuration
-DISCORD_BOT_TOKEN=your_bot_token
-DISCORD_WEBHOOK_URL=your_webhook_url
-DISCORD_CHANNEL_ID=your_channel_id
-
-# UEX API Configuration
-UEX_API_KEY=your_api_key
-UEX_API_BASE_URL=https://uexcorp.space/api
-UEX_WEBHOOK_SECRET=your_webhook_secret
-
-# Netlify Configuration
-NETLIFY_SITE_URL=your_site_url
-```
-
-### Security Headers
-```javascript
-const headers = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Content-Type': 'application/json'
-};
-```
-
-## Netlify Deployment Guidelines
-
-### Function Deployment
-- Functions auto-deploy on git push
-- Use `netlify dev` for local testing
-- Test with ngrok for webhook development
-- Monitor function logs in Netlify dashboard
-
-### Environment Setup
-- Set environment variables in Netlify UI
-- Use different variables for dev/prod
-- Keep secrets secure and rotated
-- Document all required variables
-
-### Performance Optimization
-- Keep function bundle size minimal
-- Use appropriate timeout settings
-- Implement caching where possible
-- Monitor cold start performance
-
-## Testing Guidelines
-
-### Unit Testing
-- Test webhook payload parsing
-- Verify Discord message formatting
-- Test UEX API request building
-- Mock external API calls
-
-### Integration Testing
-- Use Playwright MCP for browser testing
-- Test actual Discord webhook delivery
-- Verify UEX API integration
-- Test error handling scenarios
-
-### Local Development
-```bash
-# Install Netlify CLI
-npm install -g netlify-cli
-
-# Start local development
-netlify dev
-
-# Test functions locally
-netlify functions:invoke function-name
-```
-
-## Documentation Standards
-
-### Function Documentation
-- Document each function's purpose
-- Include example request/response
-- Document environment variables used
-- Provide troubleshooting steps
-
-### API Documentation
-- Document all webhook endpoints
-- Include Discord command reference
-- Provide UEX API integration guide
-- Document error codes and messages
-
-## Monitoring and Logging
-
-### Function Logging
-```javascript
-console.log('[INFO]', 'Webhook received:', payload);
-console.error('[ERROR]', 'API call failed:', error);
-console.warn('[WARN]', 'Rate limit approaching');
-```
-
-### Error Tracking
-- Log all function errors with context
-- Monitor Netlify function analytics
-- Track Discord API rate limits
-- Monitor UEX API response times
-
-## Discord Integration Patterns
-
-### Notification Format
-```javascript
-const embed = {
-  title: "🔔 New UEX Message",
-  description: listing.title,
-  color: 0x00ff00,
-  fields: [
-    { name: "From", value: sender.username, inline: true },
-    { name: "Message", value: message.text, inline: false }
-  ],
-  footer: { text: `Negotiation: ${hash}` }
-};
-```
-
-### Command Handling
-```javascript
-// Parse: /reply 123abc Your message here
-const [command, hash, ...messageParts] = content.split(' ');
-const replyText = messageParts.join(' ');
-```
-
-## UEX API Integration Patterns
-
-### Authentication
-```javascript
-const headers = {
-  'Authorization': `Bearer ${process.env.UEX_API_KEY}`,
-  'Content-Type': 'application/json',
-  'User-Agent': 'UEX-Discord-Bot/1.0'
-};
-```
-
-### Request Retry Logic
-```javascript
-async function retryRequest(fn, maxRetries = 3) {
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      return await fn();
-    } catch (error) {
-      if (i === maxRetries - 1) throw error;
-      await sleep(Math.pow(2, i) * 1000); // Exponential backoff
-    }
-  }
-}
-```
-
-## Common Patterns
-
-### Webhook Validation
-```javascript
-function validateWebhook(body, signature, secret) {
-  const expectedSignature = crypto
-    .createHmac('sha256', secret)
-    .update(JSON.stringify(body))
-    .digest('hex');
-  return signature === expectedSignature;
-}
-```
-
-### Response Helpers
-```javascript
-const success = (data) => ({
-  statusCode: 200,
-  headers,
-  body: JSON.stringify({ success: true, data })
-});
-
-const error = (message, statusCode = 400) => ({
-  statusCode,
-  headers,
-  body: JSON.stringify({ success: false, error: message })
-});
-```
-
-## Best Practices
-
-1. **Always validate webhook signatures** before processing
-2. **Use structured logging** for debugging
-3. **Implement proper rate limiting** for Discord API
-4. **Cache frequently accessed data** in memory MCP
-5. **Test with actual UEX webhooks** before deployment
-6. **Monitor function performance** and cold starts
-7. **Use environment-specific configuration**
-8. **Implement graceful error handling** and user feedback
-9. **Document all API integrations** thoroughly
-10. **Keep functions lightweight** and focused
-
-## Netlify-Specific Notes
-
-### Function Limits
-- 10 second timeout for functions
-- 50MB maximum deployment size
-- 125,000 function invocations/month (free tier)
-- Cold start considerations for infrequent functions
-
-### Deployment Strategy
-- Use Git-based deployment for reliability
-- Implement preview deployments for testing
-- Use branch-based environment variables
-- Monitor build and deploy logs
-
-### Performance Tips
-- Keep dependencies minimal
-- Use connection pooling for external APIs
-- Implement proper caching strategies
-- Monitor function execution metrics 
+- **Start Script**: `package.json` must contain a `"start": "node src/bot.js"` script for production deployment.
+- **Local Development**: A `"dev": "nodemon src/bot.js"` script should be available for local testing.
+- **Documentation**: All user-facing setup instructions, deployment guides, and troubleshooting steps belong in the `docs/` directory or the main `README.md`. 

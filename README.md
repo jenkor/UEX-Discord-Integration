@@ -1,121 +1,206 @@
-# UEX-Discord Integration
+# UEX Personal Discord Bot
 
-**Free, automated UEX Corp notifications in Discord with reply functionality**
+A personal Discord bot that sends UEX Corp marketplace notifications directly to your DMs. Deploy your own instance for free, completely private notifications.
 
-Never miss another UEX Corp negotiation message! This integration sends instant Discord notifications when someone messages your listings and lets you reply directly from Discord.
+## 🎯 What This Bot Does
 
-> 📖 **Looking for the wiki?** Our complete documentation is in the [`/wiki/` folder](wiki/) of this repository, not in GitHub's Wiki tab. Click any link below to get started!
+- **Private DM Notifications**: Receives UEX Corp marketplace events and sends them as direct messages to you
+- **Slash Commands**: Reply to negotiations directly through Discord using `/reply` commands
+- **Personal Deployment**: Each user deploys their own bot instance - completely private and independent
+- **Free Forever**: Deploy on free hosting platforms with no usage limits
+
+## 🏗️ Architecture
+
+This bot replaces the previous Netlify Functions approach with a persistent Node.js application:
+
+- **Express Server**: Handles incoming UEX webhooks at `/webhook/uex`
+- **Discord.js Client**: Connects to Discord Gateway for DM delivery and command handling
+- **Modular Design**: Easy to extend with new commands and features
 
 ## 🚀 Quick Start
 
-**⏱️ Setup time: 15-20 minutes**
+### 1. Create Your Discord Bot
 
-1. **[📖 Complete Setup Guide](wiki/Setup-Guide.md)** - Step-by-step instructions for beginners
-2. **[🔑 Getting API Keys](wiki/Getting-API-Keys.md)** - How to get your UEX Corp and Discord credentials  
-3. **[✅ First Steps Checklist](wiki/First-Steps-Checklist.md)** - What you need before you begin
+1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
+2. Create a new application
+3. Go to the "Bot" section and create a bot
+4. Copy the bot token (keep this secret!)
+5. Invite the bot to any Discord server you're in (required for DMs)
 
-**Need help?** Check our **[🆘 Troubleshooting Guide](wiki/Troubleshooting.md)** or **[❓ FAQ](wiki/FAQ.md)**
+### 2. Get Your Discord User ID
 
-## 🎯 What You Get
+1. Enable Developer Mode in Discord Settings > Advanced
+2. Right-click your username anywhere in Discord
+3. Select "Copy User ID"
 
-✅ **Instant Discord notifications** when someone messages your UEX Corp listings  
-✅ **Reply directly from Discord** using `/reply` commands  
-✅ **24/7 automated system** running for free on Netlify  
-✅ **Professional setup** that never misses a message  
-✅ **Beginner-friendly** with detailed step-by-step guides
+### 3. Deploy the Bot
 
-## 📚 Complete Wiki Documentation
+#### Option A: Wispbyte (Recommended)
+1. Fork this repository
+2. Sign up at [Wispbyte](https://wispbyte.com)
+3. Create a new project and connect your GitHub repository
+4. Set environment variables in the Wispbyte dashboard
+5. Deploy!
 
-### **Getting Started**
-- 📖 **[Setup Guide](wiki/Setup-Guide.md)** - Complete step-by-step installation (START HERE!)
-- 🔑 **[Getting API Keys](wiki/Getting-API-Keys.md)** - How to get your UEX Corp and Discord credentials
-- ✅ **[First Steps Checklist](wiki/First-Steps-Checklist.md)** - What you need before you begin
+#### Option B: Railway
+1. Fork this repository
+2. Sign up at [Railway](https://railway.app)
+3. Create new project from GitHub repo
+4. Set environment variables
+5. Deploy!
 
-### **Advanced Features**
-- 🤖 **[Discord Bot Setup](wiki/Discord-Bot-Setup.md)** - Enable `/reply` slash commands (optional)
-- ⚙️ **[Advanced Configuration](wiki/Advanced-Configuration.md)** - Custom domains, security, monitoring
-- 🎨 **[Customization Guide](wiki/Customization-Guide.md)** - Modify messages, add features
+### 4. Configure Environment Variables
 
-### **Help & Support**
-- 🔧 **[Troubleshooting](wiki/Troubleshooting.md)** - Fix common problems
-- ❓ **[FAQ](wiki/FAQ.md)** - Frequently asked questions
-- 📋 **[Environment Variables](wiki/Environment-Variables.md)** - Complete reference
-- 🔌 **[API Reference](wiki/API-Reference.md)** - Technical documentation
+Set these in your hosting platform's environment variables:
 
-## 🛠️ Technology Stack
+```bash
+# Required
+DISCORD_BOT_TOKEN=your_discord_bot_token_here
+DISCORD_USER_ID=your_discord_user_id_here
+UEX_API_TOKEN=your_uex_api_token_here
+UEX_SECRET_KEY=your_uex_secret_key_here
 
-- **Frontend:** Static site (optional dashboard)
-- **Backend:** Netlify Functions (serverless)
-- **Webhooks:** UEX Corp → Netlify Function → Discord
-- **Commands:** Discord → Netlify Function → UEX Corp API
-- **Storage:** Environment variables for secrets
-
-## 🆓 Completely Free
-
-- ✅ **Netlify:** Free tier includes 125k function calls/month
-- ✅ **GitHub:** Free for public repositories  
-- ✅ **Discord:** Free service, always
-- ✅ **UEX Corp:** Free API access
-
-You won't pay anything unless you exceed Netlify's generous free limits.
-
-## ⚡ Quick Demo
-
-**Notification Example:**
-```
-🔔 New UEX Message
-Mining Equipment - Size 2 Refinery
-
-👤 From: SpaceTrader42
-📝 Message: "I'm interested in this item. Is it still available?"
-
-💬 To Reply:
-/reply abc123 Your message here
-
-Negotiation: abc123def456...
+# Optional
+UEX_WEBHOOK_SECRET=your_webhook_secret_for_validation
 ```
 
-## 🔧 System Requirements
+### 5. Configure UEX Webhooks
 
-**You need accounts on these free services:**
-- UEX Corp (you already have this)
-- Discord (free account)
-- GitHub (free account)  
-- Netlify (free account)
+1. In your UEX Corp dashboard, set webhook URL to: `https://your-bot-domain.com/webhook/uex`
+2. Optionally set the webhook secret for validation
 
-**No programming experience required!** Our guides explain everything step-by-step.
+## 💬 Usage
 
-## 🆘 Getting Help
+### Receiving Notifications
+- UEX marketplace events are automatically sent as DMs
+- Rich embeds show negotiation details, messages, and reply instructions
 
-**Start here:** [Setup Guide](wiki/Setup-Guide.md) - Detailed step-by-step instructions
+### Replying to Negotiations
+Use the `/reply` slash command:
+```
+/reply hash:abc123def message:Thanks for your offer!
+```
 
-**Having problems?** [Troubleshooting](wiki/Troubleshooting.md) - Solutions to common issues
+### Testing the Bot
+- Visit `https://your-bot-domain.com/health` to check bot status
+- Use `POST /test/dm` to send a test DM
 
-**Still stuck?** Create an issue in our [GitHub repository](https://github.com/jenkor/UEX-Discord-Integration/issues) and we'll help you out!
+## 🛠️ Local Development
 
-## 🔗 Useful Links
+1. Clone the repository:
+```bash
+git clone https://github.com/your-username/uex-discord-bot.git
+cd uex-discord-bot
+```
 
-- **[📖 Wiki Home](wiki/Home.md)** - Complete documentation hub
-- **[🚀 Setup Guide](wiki/Setup-Guide.md)** - Start here for installation
-- **[❓ FAQ](wiki/FAQ.md)** - Answers to common questions
-- **[🔧 Troubleshooting](wiki/Troubleshooting.md)** - Fix problems
-- **[📋 Environment Variables](wiki/Environment-Variables.md)** - Configuration reference
+2. Install dependencies:
+```bash
+npm install
+```
 
-## 🤝 Contributing
+3. Create `.env` file from `env.example`:
+```bash
+cp env.example .env
+# Edit .env with your actual values
+```
 
-We welcome contributions! Please see our wiki for:
-- **[Customization Guide](wiki/Customization-Guide.md)** - Share your improvements
-- **[Advanced Configuration](wiki/Advanced-Configuration.md)** - Technical enhancements
-- **[API Reference](wiki/API-Reference.md)** - Integration documentation
+4. Start development server:
+```bash
+npm run dev
+```
+
+## 📁 Project Structure
+
+```
+src/
+├── bot.js              # Main entry point
+├── commands/           # Discord slash commands
+│   └── reply.js        # Reply to UEX negotiations
+├── handlers/           # External integrations
+│   ├── webhook.js      # UEX webhook processing
+│   └── uex-api.js      # UEX API communication
+└── utils/              # Shared utilities
+    ├── config.js       # Environment configuration
+    └── logger.js       # Logging utility
+```
+
+## 🔧 Adding New Commands
+
+1. Create a new file in `src/commands/`:
+```javascript
+// src/commands/status.js
+const { SlashCommandBuilder } = require('discord.js');
+
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('status')
+    .setDescription('Check bot status'),
+  
+  async execute(interaction) {
+    await interaction.reply('Bot is online!');
+  }
+};
+```
+
+2. Restart the bot - commands are automatically loaded
+
+## 🆘 Troubleshooting
+
+### Bot Won't Start
+- ✅ Check all required environment variables are set
+- ✅ Verify Discord bot token is valid
+- ✅ Ensure bot is invited to at least one Discord server
+
+### DMs Not Working
+- ✅ Bot must share a server with you to send DMs
+- ✅ Check Discord privacy settings allow DMs from server members
+- ✅ Verify DISCORD_USER_ID is correct
+
+### Webhooks Not Working
+- ✅ Update UEX webhook URL to your deployed bot's `/webhook/uex` endpoint
+- ✅ Check UEX_WEBHOOK_SECRET matches your UEX configuration
+- ✅ Verify bot is publicly accessible
+
+## 🔐 Security
+
+- **Private Deployment**: Each user has their own bot instance
+- **Environment Variables**: All secrets stored in hosting platform
+- **DM Only**: Notifications only go to the configured user
+- **Webhook Validation**: Optional signature verification for UEX webhooks
+
+## 📈 Migration from Netlify Functions
+
+If you're migrating from the old Netlify Functions setup:
+
+1. **Environment Variables**: Update from webhook URLs to bot tokens
+2. **UEX Webhook URL**: Change from Netlify function to your new bot's `/webhook/uex`
+3. **Discord Setup**: Switch from webhooks to bot DMs
+4. **No More Limits**: Enjoy unlimited usage on free hosting
+
+## 🎉 Benefits Over Previous Setup
+
+- ✅ **No cold starts** - Always-on connection
+- ✅ **No usage limits** - Free forever hosting
+- ✅ **Better Discord integration** - Native bot features
+- ✅ **Private DMs** - No public channel messages
+- ✅ **Easier development** - Standard Node.js app
+- ✅ **More reliable** - Persistent connection
 
 ## 📄 License
 
-MIT License - Feel free to use, modify, and distribute.
+MIT License - feel free to modify and deploy your own instance!
 
----
+## 🤝 Contributing
 
-## 👉 Ready to Get Started?
+This is designed for personal deployment, but improvements are welcome:
 
-**[🚀 Click here to begin with the Setup Guide →](wiki/Setup-Guide.md)**
+1. Fork the repository
+2. Create a feature branch
+3. Submit a pull request
 
-*Complete setup in 15-20 minutes with our beginner-friendly guides!* 
+## 📞 Support
+
+- Check the `/health` endpoint for bot status
+- Review logs in your hosting platform
+- Ensure all environment variables are correctly set
+- Verify Discord bot permissions and server membership 
