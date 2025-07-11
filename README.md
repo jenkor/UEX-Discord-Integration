@@ -1,21 +1,40 @@
-# UEX Personal Discord Bot
+# UEX Discord Bot
 
-A personal Discord bot that sends UEX Corp marketplace notifications directly to your DMs. Deploy your own instance for free, completely private notifications.
+A secure multi-user Discord bot that sends UEX Corp marketplace notifications directly to your DMs. One deployment serves multiple users with complete privacy options.
 
 ## 🎯 What This Bot Does
 
 - **Private DM Notifications**: Receives UEX Corp marketplace events and sends them as direct messages to you
 - **Slash Commands**: Reply to negotiations directly through Discord using `/reply` commands
-- **Personal Deployment**: Each user deploys their own bot instance - completely private and independent
-- **Free Forever**: Deploy on free hosting platforms with no usage limits
+- **Multi-User Architecture**: One bot deployment serves multiple users securely
+- **Privacy by Design**: Encrypted credentials + Discord permissions for complete privacy
+- **Free Forever**: Deploy once, serve multiple users on free hosting platforms
 
 ## 🏗️ Architecture
 
-This bot replaces the previous Netlify Functions approach with a persistent Node.js application:
+This bot uses a secure multi-user architecture with privacy options:
 
 - **Express Server**: Handles incoming UEX webhooks at `/webhook/uex`
 - **Discord.js Client**: Connects to Discord Gateway for DM delivery and command handling
-- **Modular Design**: Easy to extend with new commands and features
+- **Encrypted User Storage**: All user credentials secured with AES-256 encryption
+- **Privacy Controls**: Discord permissions provide complete user isolation
+
+### 🔒 Privacy Options
+
+**🏠 Private Discord Server**
+- Create your own Discord server, invite only the bot
+- Complete isolation, like having your own personal bot
+- No other users can see your activity
+
+**🔒 Private Channels**
+- Use private channels in existing Discord servers
+- Channel permissions control who can see bot interactions
+- Perfect for teams or small groups
+
+**👥 Shared Servers**
+- All bot commands are ephemeral (only you see responses)
+- Your credentials are encrypted and isolated from other users
+- Convenient for large Discord communities
 
 ## 🚀 Quick Start
 
@@ -56,34 +75,70 @@ Set these in your hosting platform's environment variables:
 ```bash
 # Required
 DISCORD_BOT_TOKEN=your_discord_bot_token_here
-DISCORD_USER_ID=your_discord_user_id_here
-UEX_API_TOKEN=your_uex_api_token_here
-UEX_SECRET_KEY=your_uex_secret_key_here
+USER_ENCRYPTION_KEY=your_random_32_character_encryption_key
 
 # Optional
 UEX_WEBHOOK_SECRET=your_webhook_secret_for_validation
 ```
 
-### 5. Configure UEX Webhooks
+### 5. Users Register Their UEX Credentials
 
-1. In your UEX Corp dashboard, set webhook URL to: `https://your-bot-domain.com/webhook/uex`
-2. Optionally set the webhook secret for validation
+Each user runs this command to securely register their UEX API credentials:
+```
+/register api_token:their_uex_token secret_key:their_uex_secret
+```
+
+### 6. Configure UEX Webhooks (Per User)
+
+Each user sets their UEX webhook URL to: `https://your-bot-domain.com/webhook/uex`
 
 ## 💬 Usage
 
-### Receiving Notifications
-- UEX marketplace events are automatically sent as DMs
-- Rich embeds show negotiation details, messages, and reply instructions
+### For Users
 
-### Replying to Negotiations
-Use the `/reply` slash command:
+**Register Your Credentials:**
+```
+/register api_token:your_uex_token secret_key:your_uex_secret
+```
+
+**Reply to Negotiations:**
 ```
 /reply hash:abc123def message:Thanks for your offer!
 ```
 
+**Remove Your Credentials:**
+```
+/unregister
+```
+
+### For Server Admins
+
+**View Usage Statistics:**
+```
+/admin stats
+```
+
+**View Bot Information:**
+```
+/admin info
+```
+
+### Privacy & Notifications
+- UEX marketplace events automatically sent as DMs to the appropriate user
+- All commands are ephemeral (only you see the responses)
+- Rich embeds show negotiation details and reply instructions
+
 ### Testing the Bot
 - Visit `https://your-bot-domain.com/health` to check bot status
-- Use `POST /test/dm` to send a test DM
+- Send a test DM: `POST /test/dm/YOUR_DISCORD_USER_ID`
+
+## 🔒 Security & Privacy
+
+- 🔐 **Encrypted Storage**: All user credentials encrypted with AES-256
+- 👤 **User Isolation**: Each user can only access their own negotiations
+- 🔑 **Permission Validation**: Admin commands require Discord admin permissions
+- 📝 **Audit Trail**: All user actions logged for security
+- 🏠 **Privacy Options**: Use private Discord servers/channels for complete isolation
 
 ## 🛠️ Local Development
 
@@ -168,23 +223,15 @@ module.exports = {
 - **DM Only**: Notifications only go to the configured user
 - **Webhook Validation**: Optional signature verification for UEX webhooks
 
-## 📈 Migration from Netlify Functions
+## 🎉 Benefits of This Architecture
 
-If you're migrating from the old Netlify Functions setup:
-
-1. **Environment Variables**: Update from webhook URLs to bot tokens
-2. **UEX Webhook URL**: Change from Netlify function to your new bot's `/webhook/uex`
-3. **Discord Setup**: Switch from webhooks to bot DMs
-4. **No More Limits**: Enjoy unlimited usage on free hosting
-
-## 🎉 Benefits Over Previous Setup
-
-- ✅ **No cold starts** - Always-on connection
-- ✅ **No usage limits** - Free forever hosting
-- ✅ **Better Discord integration** - Native bot features
-- ✅ **Private DMs** - No public channel messages
-- ✅ **Easier development** - Standard Node.js app
-- ✅ **More reliable** - Persistent connection
+- ✅ **No deployment complexity** - Users don't need to deploy anything
+- ✅ **Privacy by choice** - Use Discord permissions for complete isolation
+- ✅ **Secure by design** - All credentials encrypted with bank-level security
+- ✅ **No usage limits** - Free forever hosting serves unlimited users
+- ✅ **Better Discord integration** - Native bot features and commands
+- ✅ **Easier maintenance** - One deployment, multiple users
+- ✅ **More reliable** - Persistent connection, no cold starts
 
 ## 📄 License
 
@@ -192,7 +239,7 @@ MIT License - feel free to modify and deploy your own instance!
 
 ## 🤝 Contributing
 
-This is designed for personal deployment, but improvements are welcome:
+This is designed for multi-user deployment, but improvements are welcome:
 
 1. Fork the repository
 2. Create a feature branch
@@ -201,6 +248,7 @@ This is designed for personal deployment, but improvements are welcome:
 ## 📞 Support
 
 - Check the `/health` endpoint for bot status
-- Review logs in your hosting platform
-- Ensure all environment variables are correctly set
-- Verify Discord bot permissions and server membership 
+- Use `/admin info` for bot configuration details
+- Ensure users have registered with `/register` command
+- Verify Discord bot permissions and server access
+- Use private Discord servers/channels for complete privacy 

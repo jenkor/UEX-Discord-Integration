@@ -102,12 +102,8 @@ client.once('ready', async () => {
   // Register commands
   await registerCommands();
   
-  // Send test DM to verify functionality
-  try {
-    await webhookHandler.sendTestDM(client);
-  } catch (error) {
-    logger.error('Failed to send test DM', { error: error.message });
-  }
+  // Multi-user bot is ready - no test DM sent since there's no specific user ID
+  logger.info('Multi-user bot ready - users can register with /register command');
   
   logger.success('🚀 UEX Discord Bot is ready for deployment!');
 });
@@ -192,10 +188,16 @@ app.post('/webhook/uex', async (req, res) => {
   }
 });
 
-// Test endpoint for DM functionality
-app.post('/test/dm', async (req, res) => {
+// Test endpoint for DM functionality - requires user ID
+app.post('/test/dm/:userId', async (req, res) => {
   try {
-    const result = await webhookHandler.sendTestDM(client);
+    const userId = req.params.userId;
+    
+    if (!userId) {
+      return res.status(400).json({ success: false, error: 'User ID required' });
+    }
+    
+    const result = await webhookHandler.sendTestDM(client, userId);
     
     if (result.success) {
       res.json({ success: true, message: 'Test DM sent successfully' });

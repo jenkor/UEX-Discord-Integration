@@ -40,6 +40,11 @@ logs/
 # Discord bot specific
 bot-debug.log
 .bot-cache/
+data/
+
+# Multi-user bot data
+users.json
+*.encrypted
 
 # Runtime data
 pids

@@ -9,7 +9,7 @@ const logger = require('../utils/logger');
 const uexAPI = require('./uex-api');
 
 /**
- * Process UEX webhook and send DM notification
+ * Process UEX webhook and send DM notification to the appropriate user
  * @param {object} discordClient - Discord.js client instance
  * @param {string} rawBody - Raw webhook request body
  * @param {string} signature - Webhook signature from headers
@@ -39,22 +39,15 @@ async function processUEXWebhook(discordClient, rawBody, signature) {
     const uexData = parseResult.data;
     logger.webhook('UEX webhook data received', uexData);
 
-    // Get user for DM
-    const user = await discordClient.users.fetch(config.DISCORD_USER_ID);
-    if (!user) {
-      throw new Error(`Could not find Discord user with ID: ${config.DISCORD_USER_ID}`);
-    }
+    // In multi-user mode, we need to determine which user should receive this notification
+    // For now, we'll log that this feature needs implementation for user-specific routing
+    // This would require mapping UEX listing owners to Discord user IDs
+    logger.warn('Multi-user webhook routing not yet implemented - webhook received but no user mapping available');
 
-    // Create and send DM
-    const embed = createNotificationEmbed(uexData);
-    await user.send({ embeds: [embed] });
-
-    logger.success('UEX notification sent via DM', {
-      negotiationHash: uexData.negotiation_hash,
-      userId: config.DISCORD_USER_ID
-    });
-
-    return { success: true };
+    return { 
+      success: true, 
+      message: 'Webhook received but user-specific routing not implemented yet' 
+    };
 
   } catch (error) {
     logger.error('Failed to process UEX webhook', {
@@ -144,27 +137,28 @@ function createNotificationEmbed(uexData) {
 }
 
 /**
- * Send test DM to verify bot functionality
+ * Send test DM to a specific user to verify bot functionality
  * @param {object} discordClient - Discord.js client instance
+ * @param {string} userId - Discord user ID to send test DM to
  * @returns {Promise<{success: boolean, error?: string}>}
  */
-async function sendTestDM(discordClient) {
+async function sendTestDM(discordClient, userId) {
   try {
-    logger.discord('Sending test DM');
+    logger.discord('Sending test DM', { userId });
 
-    const user = await discordClient.users.fetch(config.DISCORD_USER_ID);
+    const user = await discordClient.users.fetch(userId);
     if (!user) {
-      throw new Error(`Could not find Discord user with ID: ${config.DISCORD_USER_ID}`);
+      throw new Error(`Could not find Discord user with ID: ${userId}`);
     }
 
     const embed = new EmbedBuilder()
       .setTitle('🤖 UEX Discord Bot Test')
-      .setDescription('Your personal UEX Discord bot is working correctly!')
+      .setDescription('The UEX Discord bot is working correctly!')
       .setColor(0x00ff00)
       .addFields([
         {
           name: '✅ Bot Status',
-          value: 'Online and ready to receive UEX notifications',
+          value: 'Online and ready to receive your UEX notifications',
           inline: false
         },
         {
@@ -173,8 +167,13 @@ async function sendTestDM(discordClient) {
           inline: false
         },
         {
-          name: '🔗 Webhook URL',
-          value: 'Configure UEX webhooks to point to your bot\'s `/webhook/uex` endpoint',
+          name: '🔗 Setup Webhook',
+          value: 'Configure your UEX webhooks to point to the bot\'s `/webhook/uex` endpoint',
+          inline: false
+        },
+        {
+          name: '🔐 Privacy',
+          value: 'Your credentials are encrypted and your notifications are private',
           inline: false
         }
       ])
@@ -183,11 +182,12 @@ async function sendTestDM(discordClient) {
 
     await user.send({ embeds: [embed] });
 
-    logger.success('Test DM sent successfully');
+    logger.success('Test DM sent successfully', { userId });
     return { success: true };
 
   } catch (error) {
     logger.error('Failed to send test DM', {
+      userId,
       error: error.message,
       stack: error.stack
     });

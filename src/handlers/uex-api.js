@@ -13,6 +13,17 @@ const logger = require('../utils/logger');
  * @returns {Promise<{success: boolean, messageId?: string, error?: string}>}
  */
 async function sendReply(negotiationHash, message) {
+  throw new Error('Direct sendReply not supported in multi-user mode. Use sendReplyWithCredentials.');
+}
+
+/**
+ * Send a reply message to a UEX negotiation with specific credentials
+ * @param {string} negotiationHash - The negotiation hash from UEX
+ * @param {string} message - The message to send
+ * @param {object} credentials - API credentials {apiToken, secretKey}
+ * @returns {Promise<{success: boolean, messageId?: string, error?: string}>}
+ */
+async function sendReplyWithCredentials(negotiationHash, message, credentials) {
   try {
     logger.uex(`Sending reply to negotiation: ${negotiationHash}`);
     
@@ -20,9 +31,9 @@ async function sendReply(negotiationHash, message) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.UEX_API_TOKEN}`,
-        'secret_key': config.UEX_SECRET_KEY,
-        'User-Agent': 'UEX-Discord-Bot/2.0'
+        'Authorization': `Bearer ${credentials.apiToken}`,
+        'secret_key': credentials.secretKey,
+        'User-Agent': 'UEX-Discord-Bot/2.0-MultiUser'
       },
       body: JSON.stringify({
         hash: negotiationHash,
@@ -187,6 +198,7 @@ function parseWebhookData(rawBody) {
 
 module.exports = {
   sendReply,
+  sendReplyWithCredentials,
   testConnection,
   validateWebhookSignature,
   parseWebhookData

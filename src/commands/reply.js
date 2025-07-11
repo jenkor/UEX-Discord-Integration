@@ -6,6 +6,8 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const uexAPI = require('../handlers/uex-api');
 const logger = require('../utils/logger');
+const userManager = require('../utils/user-manager');
+const config = require('../utils/config');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -33,18 +35,51 @@ module.exports = {
       // Get command options
       const hash = interaction.options.getString('hash');
       const message = interaction.options.getString('message');
+      const userId = interaction.user.id;
 
       logger.command('Processing reply command', {
         hash,
         messageLength: message.length,
-        userId: interaction.user.id
+        userId
       });
 
       // Defer reply since UEX API call might take some time
       await interaction.deferReply({ ephemeral: true });
 
-      // Send reply to UEX API
-      const result = await uexAPI.sendReply(hash, message);
+      // Get user's registered credentials
+      const userResult = await userManager.getUserCredentials(userId);
+      
+      if (!userResult.found) {
+        const notRegisteredEmbed = new EmbedBuilder()
+          .setTitle('❌ Not Registered')
+          .setDescription('You need to register your UEX API credentials first.')
+          .setColor(0xff0000)
+          .addFields([
+            {
+              name: '📝 How to Register',
+              value: 'Use `/register` command with your UEX API credentials',
+              inline: false
+            },
+            {
+              name: '🔑 Get API Keys',
+              value: 'Contact UEX Corp support to obtain your API credentials',
+              inline: false
+            },
+            {
+              name: '🏠 Privacy Options',
+              value: 'Create a private Discord server or use private channels for complete privacy',
+              inline: false
+            }
+          ])
+          .setFooter({ text: 'UEX Discord Bot' })
+          .setTimestamp();
+
+        await interaction.editReply({ embeds: [notRegisteredEmbed] });
+        return;
+      }
+
+      // Send reply to UEX API with user's credentials
+      const result = await uexAPI.sendReplyWithCredentials(hash, message, userResult.credentials);
 
       if (result.success) {
         // Success response
