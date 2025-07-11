@@ -55,18 +55,27 @@ This bot uses a secure multi-user architecture with privacy options:
 ### 3. Deploy the Bot
 
 #### Option A: Wispbyte (Recommended)
-1. Fork this repository
-2. Sign up at [Wispbyte](https://wispbyte.com)
-3. Create a new project and connect your GitHub repository
-4. Set environment variables in the Wispbyte dashboard
-5. Deploy!
+**📖 [Complete Wispbyte Deployment Guide →](docs/WISPBYTE-DEPLOYMENT.md)**
+
+Quick steps:
+1. Fork this repository 
+2. Create Discord bot at [Discord Developer Portal](https://discord.com/developers/applications)
+3. Sign up at [Wispbyte](https://wispbyte.com) 
+4. Import GitHub repository and set environment variables
+5. Deploy and start using!
 
 #### Option B: Railway
 1. Fork this repository
 2. Sign up at [Railway](https://railway.app)
 3. Create new project from GitHub repo
-4. Set environment variables
+4. Set environment variables (same as Wispbyte guide)
 5. Deploy!
+
+#### Option C: Other Platforms
+The bot works on any Node.js hosting platform:
+- **Render**: https://render.com
+- **Daki Hosting**: https://daki.dev  
+- **Any VPS**: With Node.js 18+ support
 
 ### 4. Configure Environment Variables
 
