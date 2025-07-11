@@ -85,14 +85,6 @@ Negotiation: abc123def456...
 
 **No programming experience required!** Our guides explain everything step-by-step.
 
-## 📱 What Others Are Saying
-
-> *"This wiki made it so easy! I had notifications working in 12 minutes."* - Discord User
-
-> *"Finally found a free alternative to Zapier that actually works."* - UEX Trader
-
-> *"The step-by-step screenshots saved me so much time."* - GitHub User
-
 ## 🆘 Getting Help
 
 **Start here:** [Setup Guide](wiki/Setup-Guide.md) - Detailed step-by-step instructions
