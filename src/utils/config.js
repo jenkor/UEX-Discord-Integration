@@ -11,15 +11,9 @@ const path = require('path');
 const localEnvPath = path.join(process.cwd(), '.env.local');
 if (fs.existsSync(localEnvPath)) {
   require('dotenv').config({ path: '.env.local' });
-  console.log('🔧 Loaded .env.local for local testing');
 } else {
   require('dotenv').config();
 }
-
-// Debug: Check what environment variables are actually loaded
-console.log('🔍 Environment variables check:');
-console.log('DISCORD_BOT_TOKEN:', process.env.DISCORD_BOT_TOKEN ? 'SET' : 'NOT SET');
-console.log('USER_ENCRYPTION_KEY:', process.env.USER_ENCRYPTION_KEY ? 'SET' : 'NOT SET');
 
 // Validate required environment variables
 const requiredVars = [
