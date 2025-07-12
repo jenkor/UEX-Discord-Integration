@@ -171,6 +171,26 @@ async function registerUser(userId, userData) {
 
     const usersData = await loadUsersData();
 
+    // Get UEX username from API
+    const uexAPI = require('../handlers/uex-api');
+    const profileResult = await uexAPI.getUserProfile({
+      apiToken: userData.apiToken,
+      secretKey: userData.secretKey
+    });
+
+    let uexUsername = null;
+    if (profileResult.success) {
+      uexUsername = profileResult.username;
+      logger.info('Retrieved UEX username for user', { userId, uexUsername });
+    } else {
+      logger.warn('Could not retrieve UEX username during registration', { 
+        userId, 
+        error: profileResult.error 
+      });
+      // Continue with registration even if we can't get the username
+      // User will still be able to use commands, just won't receive targeted webhook notifications
+    }
+
     // Encrypt sensitive data
     const encryptedApiToken = encrypt(userData.apiToken);
     const encryptedSecretKey = encrypt(userData.secretKey);
@@ -178,6 +198,7 @@ async function registerUser(userId, userData) {
     // Store encrypted credentials
     usersData[userId] = {
       username: userData.username,
+      uexUsername: uexUsername, // Store UEX username for webhook routing
       registeredAt: userData.registeredAt,
       encryptedAt: new Date().toISOString(),
       credentials: {
@@ -190,7 +211,11 @@ async function registerUser(userId, userData) {
 
     await saveUsersData(usersData);
 
-    logger.success('User registered successfully', { userId, username: userData.username });
+    logger.success('User registered successfully', { 
+      userId, 
+      username: userData.username,
+      uexUsername: uexUsername 
+    });
     return { success: true };
 
   } catch (error) {
@@ -339,6 +364,42 @@ async function getAllActiveUsers() {
   }
 }
 
+/**
+ * Find Discord user by UEX username for webhook notifications
+ * @param {string} uexUsername - UEX username to search for
+ * @returns {Promise<{found: boolean, userId?: string, username?: string}>}
+ */
+async function findUserByUexUsername(uexUsername) {
+  try {
+    logger.info('Finding user by UEX username', { uexUsername });
+    const usersData = await loadUsersData();
+    
+    for (const [userId, userData] of Object.entries(usersData)) {
+      if (userData.active && userData.uexUsername === uexUsername) {
+        logger.info('Found user by UEX username', { 
+          uexUsername, 
+          userId, 
+          discordUsername: userData.username 
+        });
+        return {
+          found: true,
+          userId: userId,
+          username: userData.username
+        };
+      }
+    }
+    
+    logger.warn('No user found with UEX username', { uexUsername });
+    return { found: false };
+  } catch (error) {
+    logger.error('Failed to find user by UEX username', { 
+      uexUsername, 
+      error: error.message 
+    });
+    return { found: false };
+  }
+}
+
 module.exports = {
   validateUEXCredentials,
   registerUser,
@@ -346,5 +407,6 @@ module.exports = {
   isUserRegistered,
   unregisterUser,
   getUserStats,
-  getAllActiveUsers
+  getAllActiveUsers,
+  findUserByUexUsername
 }; 

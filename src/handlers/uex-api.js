@@ -196,10 +196,71 @@ function parseWebhookData(rawBody) {
   }
 }
 
+/**
+ * Get user profile information from UEX API
+ * @param {object} credentials - API credentials {apiToken, secretKey}
+ * @returns {Promise<{success: boolean, username?: string, profile?: object, error?: string}>}
+ */
+async function getUserProfile(credentials) {
+  try {
+    logger.uex('Getting user profile from UEX API');
+    
+    const response = await fetch(`${config.UEX_API_BASE_URL}/user/`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${credentials.apiToken}`,
+        'secret_key': credentials.secretKey,
+        'User-Agent': 'UEX-Discord-Bot/2.0-MultiUser'
+      }
+    });
+
+    const responseText = await response.text();
+    logger.uex('User profile API response received', { 
+      status: response.status, 
+      statusText: response.statusText,
+      body: responseText 
+    });
+
+    if (response.ok) {
+      try {
+        const jsonResponse = JSON.parse(responseText);
+        
+        if (jsonResponse.status === 'ok' && jsonResponse.data) {
+          const username = jsonResponse.data.username;
+          logger.success('User profile retrieved successfully', { username });
+          return { 
+            success: true, 
+            username: username,
+            profile: jsonResponse.data 
+          };
+        } else {
+          throw new Error(`UEX API error: ${jsonResponse.error || 'Unknown error'}`);
+        }
+      } catch (parseError) {
+        throw new Error(`Failed to parse UEX API response: ${parseError.message}`);
+      }
+    } else {
+      throw new Error(`HTTP ${response.status}: ${responseText}`);
+    }
+
+  } catch (error) {
+    logger.error('Failed to get user profile from UEX API', {
+      error: error.message,
+      stack: error.stack
+    });
+    
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
 module.exports = {
   sendReply,
   sendReplyWithCredentials,
   testConnection,
   validateWebhookSignature,
-  parseWebhookData
+  parseWebhookData,
+  getUserProfile
 }; 

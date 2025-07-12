@@ -40,50 +40,70 @@ async function processUEXWebhook(discordClient, rawBody, signature) {
     const uexData = parseResult.data;
     logger.webhook('UEX webhook data received', uexData);
 
-    // Get all active users and send notifications to each
-    const activeUsers = await userManager.getAllActiveUsers();
+    // Determine which user should receive the notification
+    // The webhook should notify the user who received the message (client_username)
+    const targetUexUsername = uexData.client_username;
     
-    if (activeUsers.length === 0) {
-      logger.warn('No active users found for webhook notification');
+    if (!targetUexUsername) {
+      logger.warn('No client_username in webhook data - cannot route notification');
       return {
-        success: true,
-        message: 'Webhook received but no active users to notify'
+        success: false,
+        error: 'Missing client_username in webhook data'
       };
     }
 
-    // Send notification to all active users
-    const notificationResults = [];
-    for (const user of activeUsers) {
-      try {
-        const result = await sendNotificationDM(discordClient, user.userId, uexData);
-        notificationResults.push({
-          userId: user.userId,
-          username: user.username,
-          success: result.success,
-          error: result.error
-        });
-      } catch (error) {
-        logger.error('Failed to send notification to user', {
-          userId: user.userId,
-          error: error.message
-        });
-        notificationResults.push({
-          userId: user.userId,
-          username: user.username,
-          success: false,
-          error: error.message
-        });
-      }
+    // Find the Discord user by their UEX username
+    const userResult = await userManager.findUserByUexUsername(targetUexUsername);
+    
+    if (!userResult.found) {
+      logger.warn('No registered Discord user found for UEX username', { 
+        uexUsername: targetUexUsername 
+      });
+      return {
+        success: true,
+        message: `Webhook received for UEX user "${targetUexUsername}" but no matching Discord user found`
+      };
     }
 
-    const successCount = notificationResults.filter(r => r.success).length;
-    logger.webhook(`Sent notifications to ${successCount}/${activeUsers.length} users`);
-
-    return { 
-      success: true, 
-      message: `Notifications sent to ${successCount}/${activeUsers.length} active users`,
-      results: notificationResults
-    };
+    // Send notification to the specific user
+    try {
+      const result = await sendNotificationDM(discordClient, userResult.userId, uexData);
+      
+      if (result.success) {
+        logger.success('Webhook notification sent successfully', {
+          uexUsername: targetUexUsername,
+          discordUserId: userResult.userId,
+          discordUsername: userResult.username
+        });
+        
+        return { 
+          success: true, 
+          message: `Notification sent to Discord user ${userResult.username} for UEX user ${targetUexUsername}`
+        };
+      } else {
+        logger.error('Failed to send webhook notification', {
+          uexUsername: targetUexUsername,
+          discordUserId: userResult.userId,
+          error: result.error
+        });
+        
+        return {
+          success: false,
+          error: `Failed to send notification: ${result.error}`
+        };
+      }
+    } catch (error) {
+      logger.error('Error sending webhook notification', {
+        uexUsername: targetUexUsername,
+        discordUserId: userResult.userId,
+        error: error.message
+      });
+      
+      return {
+        success: false,
+        error: error.message
+      };
+    }
 
   } catch (error) {
     logger.error('Failed to process UEX webhook', {
