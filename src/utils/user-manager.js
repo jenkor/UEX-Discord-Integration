@@ -95,27 +95,57 @@ async function validateUEXCredentials(apiToken, secretKey) {
   try {
     logger.info('Validating UEX credentials');
     
-    // Test with a simple API call
-    const response = await fetch(`${config.UEX_API_BASE_URL}/`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${apiToken}`,
-        'secret_key': secretKey,
-        'User-Agent': 'UEX-Discord-Bot/2.0-MultiUser'
-      }
-    });
+    // Basic format validation first
+    if (!apiToken || !secretKey || apiToken.length < 10 || secretKey.length < 10) {
+      return { valid: false, error: 'API token and secret key must be at least 10 characters' };
+    }
+    
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
+    try {
+      // Test with a simple API call
+      const response = await fetch(`${config.UEX_API_BASE_URL}/`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${apiToken}`,
+          'secret_key': secretKey,
+          'User-Agent': 'UEX-Discord-Bot/2.0-MultiUser'
+        },
+        signal: controller.signal
+      });
 
-    if (response.ok) {
-      logger.success('UEX credentials validation successful');
-      return { valid: true };
-    } else {
-      const error = `HTTP ${response.status}: ${response.statusText}`;
-      logger.warn('UEX credentials validation failed', { error });
-      return { valid: false, error };
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        logger.success('UEX credentials validation successful');
+        return { valid: true };
+      } else {
+        const error = `HTTP ${response.status}: ${response.statusText}`;
+        logger.warn('UEX credentials validation failed', { error });
+        return { valid: false, error };
+      }
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      
+      if (fetchError.name === 'AbortError') {
+        logger.warn('UEX API validation timeout - allowing registration anyway');
+        return { valid: true }; // Allow registration if API is slow
+      }
+      throw fetchError;
     }
 
   } catch (error) {
     logger.error('UEX credentials validation error', { error: error.message });
+    
+    // If validation fails due to network issues, allow registration anyway
+    // Users will get feedback when they try to use the credentials
+    if (error.message.includes('fetch') || error.message.includes('network')) {
+      logger.warn('Network error during validation - allowing registration');
+      return { valid: true };
+    }
+    
     return { valid: false, error: error.message };
   }
 }
@@ -133,25 +163,17 @@ async function registerUser(userId, userData) {
     const usersData = await loadUsersData();
 
     // Encrypt sensitive data
-    const encryptedData = {
-      ...userData,
-      apiToken: encrypt(userData.apiToken),
-      secretKey: encrypt(userData.secretKey),
-      encryptedAt: new Date().toISOString()
-    };
-
-    // Remove plaintext credentials
-    delete encryptedData.apiToken;
-    delete encryptedData.secretKey;
+    const encryptedApiToken = encrypt(userData.apiToken);
+    const encryptedSecretKey = encrypt(userData.secretKey);
 
     // Store encrypted credentials
     usersData[userId] = {
       username: userData.username,
       registeredAt: userData.registeredAt,
-      encryptedAt: encryptedData.encryptedAt,
+      encryptedAt: new Date().toISOString(),
       credentials: {
-        apiToken: encryptedData.apiToken,
-        secretKey: encryptedData.secretKey
+        apiToken: encryptedApiToken,
+        secretKey: encryptedSecretKey
       },
       lastUsed: null,
       active: true

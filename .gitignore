@@ -35,7 +35,7 @@ logs/
 
 # Temporary files
 *.tmp
-*.temp
+*.temp 
 
 # Discord bot specific
 bot-debug.log
