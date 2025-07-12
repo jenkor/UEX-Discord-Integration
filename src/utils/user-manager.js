@@ -301,11 +301,38 @@ async function getUserStats() {
   }
 }
 
+/**
+ * Get all active users for webhook notifications
+ * @returns {Promise<Array>} Array of active users with their Discord IDs
+ */
+async function getAllActiveUsers() {
+  try {
+    const usersData = await loadUsersData();
+    const activeUsers = [];
+    
+    for (const [userId, userData] of Object.entries(usersData)) {
+      if (userData.active) {
+        activeUsers.push({
+          userId,
+          username: userData.username,
+          registeredAt: userData.registeredAt
+        });
+      }
+    }
+    
+    return activeUsers;
+  } catch (error) {
+    logger.error('Failed to get active users', { error: error.message });
+    return [];
+  }
+}
+
 module.exports = {
   validateUEXCredentials,
   registerUser,
   getUserCredentials,
   isUserRegistered,
   unregisterUser,
-  getUserStats
+  getUserStats,
+  getAllActiveUsers
 }; 

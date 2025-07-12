@@ -7,6 +7,7 @@ const { EmbedBuilder } = require('discord.js');
 const config = require('../utils/config');
 const logger = require('../utils/logger');
 const uexAPI = require('./uex-api');
+const userManager = require('../utils/user-manager');
 
 /**
  * Process UEX webhook and send DM notification to the appropriate user
@@ -39,14 +40,49 @@ async function processUEXWebhook(discordClient, rawBody, signature) {
     const uexData = parseResult.data;
     logger.webhook('UEX webhook data received', uexData);
 
-    // In multi-user mode, we need to determine which user should receive this notification
-    // For now, we'll log that this feature needs implementation for user-specific routing
-    // This would require mapping UEX listing owners to Discord user IDs
-    logger.warn('Multi-user webhook routing not yet implemented - webhook received but no user mapping available');
+    // Get all active users and send notifications to each
+    const activeUsers = await userManager.getAllActiveUsers();
+    
+    if (activeUsers.length === 0) {
+      logger.warn('No active users found for webhook notification');
+      return {
+        success: true,
+        message: 'Webhook received but no active users to notify'
+      };
+    }
+
+    // Send notification to all active users
+    const notificationResults = [];
+    for (const user of activeUsers) {
+      try {
+        const result = await sendNotificationDM(discordClient, user.userId, uexData);
+        notificationResults.push({
+          userId: user.userId,
+          username: user.username,
+          success: result.success,
+          error: result.error
+        });
+      } catch (error) {
+        logger.error('Failed to send notification to user', {
+          userId: user.userId,
+          error: error.message
+        });
+        notificationResults.push({
+          userId: user.userId,
+          username: user.username,
+          success: false,
+          error: error.message
+        });
+      }
+    }
+
+    const successCount = notificationResults.filter(r => r.success).length;
+    logger.webhook(`Sent notifications to ${successCount}/${activeUsers.length} users`);
 
     return { 
       success: true, 
-      message: 'Webhook received but user-specific routing not implemented yet' 
+      message: `Notifications sent to ${successCount}/${activeUsers.length} active users`,
+      results: notificationResults
     };
 
   } catch (error) {
@@ -137,6 +173,42 @@ function createNotificationEmbed(uexData) {
 }
 
 /**
+ * Send notification DM to a specific user
+ * @param {object} discordClient - Discord.js client instance
+ * @param {string} userId - Discord user ID to send notification to
+ * @param {object} uexData - UEX webhook data
+ * @returns {Promise<{success: boolean, error?: string}>}
+ */
+async function sendNotificationDM(discordClient, userId, uexData) {
+  try {
+    logger.discord('Sending UEX notification DM', { userId });
+
+    const user = await discordClient.users.fetch(userId);
+    if (!user) {
+      throw new Error(`Could not find Discord user with ID: ${userId}`);
+    }
+
+    const embed = createNotificationEmbed(uexData);
+    await user.send({ embeds: [embed] });
+
+    logger.success('UEX notification DM sent successfully', { userId });
+    return { success: true };
+
+  } catch (error) {
+    logger.error('Failed to send UEX notification DM', {
+      userId,
+      error: error.message,
+      stack: error.stack
+    });
+
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
+/**
  * Send test DM to a specific user to verify bot functionality
  * @param {object} discordClient - Discord.js client instance
  * @param {string} userId - Discord user ID to send test DM to
@@ -202,5 +274,6 @@ async function sendTestDM(discordClient, userId) {
 module.exports = {
   processUEXWebhook,
   createNotificationEmbed,
+  sendNotificationDM,
   sendTestDM
 }; 
