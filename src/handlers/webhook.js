@@ -41,16 +41,39 @@ async function processUEXWebhook(discordClient, rawBody, signature) {
     logger.webhook('UEX webhook data received', uexData);
 
     // Determine which user should receive the notification
-    // The webhook should notify the listing owner who received the message
-    const targetUexUsername = uexData.listing_owner_username;
+    // 
+    // CURRENT LIMITATION: UEX webhooks only provide listing owner's username,
+    // not the buyer's username. This means we can only notify in one direction:
+    // - ✅ Buyer sends message → Notify listing owner
+    // - ❌ Owner replies → Cannot notify buyer (we don't know buyer's UEX username)
+    // 
+    // For full bidirectional notifications, we would need UEX to provide
+    // both participant usernames or a separate "recipient" field.
     
-    if (!targetUexUsername) {
-      logger.warn('No listing_owner_username in webhook data - cannot route notification');
+    const senderUsername = uexData.client_username;
+    const ownerUsername = uexData.listing_owner_username;
+    
+    if (!senderUsername || !ownerUsername) {
+      logger.warn('Missing sender or owner username in webhook data', {
+        senderUsername,
+        ownerUsername
+      });
       return {
         success: false,
-        error: 'Missing listing_owner_username in webhook data'
+        error: 'Missing client_username or listing_owner_username in webhook data'
       };
     }
+
+    // For now, we always notify the listing owner when they receive a message
+    // This covers the most common case: buyer contacts seller
+    const targetUexUsername = ownerUsername;
+    
+    logger.info('Webhook routing decision', {
+      sender: senderUsername,
+      owner: ownerUsername,
+      target: targetUexUsername,
+      reason: senderUsername === ownerUsername ? 'Owner self-message' : 'Message to listing owner'
+    });
 
     // Find the Discord user by their UEX username
     const userResult = await userManager.findUserByUexUsername(targetUexUsername);
