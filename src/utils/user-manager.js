@@ -13,6 +13,9 @@ const logger = require('./logger');
 const USERS_FILE = path.join(process.cwd(), 'user_data', 'users.json');
 const ENCRYPTION_KEY = config.USER_ENCRYPTION_KEY;
 
+// Log the file path for debugging
+logger.info('User data file path configured', { filePath: USERS_FILE, cwd: process.cwd() });
+
 /**
  * Ensure data directory exists
  */
@@ -61,14 +64,18 @@ function decrypt(encryptedText) {
  */
 async function loadUsersData() {
   try {
+    logger.info('Loading users data from', { filePath: USERS_FILE });
     await ensureDataDirectory();
     const data = await fs.readFile(USERS_FILE, 'utf8');
-    return JSON.parse(data);
+    const parsedData = JSON.parse(data);
+    logger.info('Successfully loaded users data', { userCount: Object.keys(parsedData).length });
+    return parsedData;
   } catch (error) {
     if (error.code === 'ENOENT') {
+      logger.warn('Users data file does not exist yet', { filePath: USERS_FILE });
       return {}; // File doesn't exist yet
     }
-    logger.error('Failed to load users data', { error: error.message });
+    logger.error('Failed to load users data', { error: error.message, filePath: USERS_FILE });
     throw error;
   }
 }
@@ -307,10 +314,14 @@ async function getUserStats() {
  */
 async function getAllActiveUsers() {
   try {
+    logger.info('Getting active users for webhook notification');
     const usersData = await loadUsersData();
+    logger.info('Loaded users data', { userCount: Object.keys(usersData).length });
+    
     const activeUsers = [];
     
     for (const [userId, userData] of Object.entries(usersData)) {
+      logger.info('Checking user', { userId, active: userData.active, username: userData.username });
       if (userData.active) {
         activeUsers.push({
           userId,
@@ -320,6 +331,7 @@ async function getAllActiveUsers() {
       }
     }
     
+    logger.info('Found active users', { count: activeUsers.length });
     return activeUsers;
   } catch (error) {
     logger.error('Failed to get active users', { error: error.message });
