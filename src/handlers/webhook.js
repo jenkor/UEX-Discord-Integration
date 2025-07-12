@@ -41,14 +41,14 @@ async function processUEXWebhook(discordClient, rawBody, signature) {
     logger.webhook('UEX webhook data received', uexData);
 
     // Determine which user should receive the notification
-    // The webhook should notify the user who received the message (client_username)
-    const targetUexUsername = uexData.client_username;
+    // The webhook should notify the listing owner who received the message
+    const targetUexUsername = uexData.listing_owner_username;
     
     if (!targetUexUsername) {
-      logger.warn('No client_username in webhook data - cannot route notification');
+      logger.warn('No listing_owner_username in webhook data - cannot route notification');
       return {
         success: false,
-        error: 'Missing client_username in webhook data'
+        error: 'Missing listing_owner_username in webhook data'
       };
     }
 
