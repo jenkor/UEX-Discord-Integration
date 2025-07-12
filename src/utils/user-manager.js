@@ -10,7 +10,7 @@ const config = require('./config');
 const logger = require('./logger');
 
 // File path for storing encrypted user data
-const USERS_FILE = path.join(process.cwd(), 'data', 'users.json');
+const USERS_FILE = path.join(process.cwd(), 'user_data', 'users.json');
 const ENCRYPTION_KEY = config.USER_ENCRYPTION_KEY;
 
 /**
@@ -32,7 +32,8 @@ async function ensureDataDirectory() {
  */
 function encrypt(text) {
   const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipher('aes-256-cbc', ENCRYPTION_KEY);
+  const key = crypto.scryptSync(ENCRYPTION_KEY, 'salt', 32);
+  const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
   let encrypted = cipher.update(text, 'utf8', 'hex');
   encrypted += cipher.final('hex');
   return iv.toString('hex') + ':' + encrypted;
@@ -47,7 +48,8 @@ function decrypt(encryptedText) {
   const parts = encryptedText.split(':');
   const iv = Buffer.from(parts[0], 'hex');
   const encrypted = parts[1];
-  const decipher = crypto.createDecipher('aes-256-cbc', ENCRYPTION_KEY);
+  const key = crypto.scryptSync(ENCRYPTION_KEY, 'salt', 32);
+  const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
   let decrypted = decipher.update(encrypted, 'hex', 'utf8');
   decrypted += decipher.final('utf8');
   return decrypted;
