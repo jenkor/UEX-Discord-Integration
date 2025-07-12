@@ -39,28 +39,26 @@ module.exports = {
       // Defer reply since validation might take time
       await interaction.deferReply({ ephemeral: true });
 
-      // Validate credentials with UEX API
-      const validationResult = await userManager.validateUEXCredentials(apiToken, secretKey);
-      
-      if (!validationResult.valid) {
-                 const errorEmbed = new EmbedBuilder()
-           .setTitle('❌ Registration Failed')
-           .setDescription('The provided UEX API credentials are invalid.')
-           .setColor(0xff0000)
-           .addFields([
-             {
-               name: '⚠️ Error',
-               value: validationResult.error || 'Invalid credentials',
-               inline: false
-             },
-             {
-               name: '🔗 Get Your API Keys',
-               value: 'Contact UEX Corp support to obtain valid API credentials',
-               inline: false
-             }
-           ])
-           .setFooter({ text: 'UEX Discord Bot' })
-           .setTimestamp();
+      // Basic validation only (skip API call for now)
+      if (!apiToken || !secretKey || apiToken.length < 10 || secretKey.length < 10) {
+        const errorEmbed = new EmbedBuilder()
+          .setTitle('❌ Registration Failed')
+          .setDescription('API token and secret key must be at least 10 characters long.')
+          .setColor(0xff0000)
+          .addFields([
+            {
+              name: '⚠️ Error',
+              value: 'Invalid credential format',
+              inline: false
+            },
+            {
+              name: '🔗 Get Your API Keys',
+              value: 'Contact UEX Corp support to obtain valid API credentials',
+              inline: false
+            }
+          ])
+          .setFooter({ text: 'UEX Discord Bot' })
+          .setTimestamp();
 
         await interaction.editReply({ embeds: [errorEmbed] });
         return;
