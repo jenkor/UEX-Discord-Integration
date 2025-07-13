@@ -3,7 +3,7 @@
  * Logic for handling incoming UEX webhooks and sending Discord DMs
  */
 
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const config = require('../utils/config');
 const logger = require('../utils/logger');
 const uexAPI = require('./uex-api');
@@ -272,11 +272,6 @@ function createNotificationEmbed(uexData) {
         name: '📝 Message',
         value: `"${message}"`,
         inline: false
-      },
-      {
-        name: '💬 Reply Command',
-        value: `\`/reply ${hash} your message here\``,
-        inline: false
       }
     ])
     .setFooter({ text: `Negotiation: ${hash}` })
@@ -319,7 +314,17 @@ async function sendNotificationDM(discordClient, userId, uexData) {
     }
 
     const embed = createNotificationEmbed(uexData);
-    await user.send({ embeds: [embed] });
+
+    // Create buttons for replying
+    const replyButton = new ButtonBuilder()
+      .setCustomId(`reply_${uexData.negotiation_hash}`)
+      .setLabel('Reply')
+      .setStyle(ButtonStyle.Primary);
+
+    const row = new ActionRowBuilder()
+      .addComponents(replyButton);
+
+    await user.send({ embeds: [embed], components: [row] });
 
     logger.success('UEX notification DM sent successfully', { userId });
     return { success: true };

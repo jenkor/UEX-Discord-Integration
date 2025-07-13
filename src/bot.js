@@ -11,6 +11,7 @@ const path = require('path');
 const config = require('./utils/config');
 const logger = require('./utils/logger');
 const webhookHandler = require('./handlers/webhook');
+const buttonHandler = require('./handlers/button-interactions');
 
 // Initialize Discord client
 const client = new Client({
@@ -109,34 +110,64 @@ client.once('ready', async () => {
 });
 
 client.on('interactionCreate', async interaction => {
-  if (!interaction.isChatInputCommand()) return;
+  // Handle slash commands
+  if (interaction.isChatInputCommand()) {
+    const command = client.commands.get(interaction.commandName);
 
-  const command = client.commands.get(interaction.commandName);
+    if (!command) {
+      logger.warn(`Unknown command: ${interaction.commandName}`);
+      return;
+    }
 
-  if (!command) {
-    logger.warn(`Unknown command: ${interaction.commandName}`);
+    try {
+      await command.execute(interaction);
+    } catch (error) {
+      logger.error(`Error executing command ${interaction.commandName}`, {
+        error: error.message,
+        userId: interaction.user.id
+      });
+      
+      const errorMessage = 'There was an error while executing this command!';
+      
+      try {
+        if (interaction.replied || interaction.deferred) {
+          await interaction.followUp({ content: errorMessage, ephemeral: true });
+        } else {
+          await interaction.reply({ content: errorMessage, ephemeral: true });
+        }
+      } catch (replyError) {
+        logger.error('Failed to send error reply', { error: replyError.message });
+      }
+    }
     return;
   }
 
-  try {
-    await command.execute(interaction);
-  } catch (error) {
-    logger.error(`Error executing command ${interaction.commandName}`, {
-      error: error.message,
-      userId: interaction.user.id
-    });
-    
-    const errorMessage = 'There was an error while executing this command!';
-    
+  // Handle button interactions
+  if (interaction.isButton()) {
     try {
-      if (interaction.replied || interaction.deferred) {
-        await interaction.followUp({ content: errorMessage, ephemeral: true });
-      } else {
-        await interaction.reply({ content: errorMessage, ephemeral: true });
-      }
-    } catch (replyError) {
-      logger.error('Failed to send error reply', { error: replyError.message });
+      await buttonHandler.handleButtonInteraction(interaction);
+    } catch (error) {
+      logger.error('Button interaction error', {
+        error: error.message,
+        customId: interaction.customId,
+        userId: interaction.user.id
+      });
     }
+    return;
+  }
+
+  // Handle modal submit interactions
+  if (interaction.isModalSubmit()) {
+    try {
+      await buttonHandler.handleModalSubmit(interaction);
+    } catch (error) {
+      logger.error('Modal submit error', {
+        error: error.message,
+        customId: interaction.customId,
+        userId: interaction.user.id
+      });
+    }
+    return;
   }
 });
 
