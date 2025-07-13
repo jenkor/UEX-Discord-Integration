@@ -224,73 +224,82 @@ module.exports = {
         return;
       }
 
-      // Success! Show listing details
+      // Success! Show listing details with website-style design
+      const operationEmoji = operation === 'sell' ? '💰' : '🛒';
+      const operationText = operation === 'sell' ? 'WTS (Want to Sell)' : 'WTB (Want to Buy)';
+      const statusEmoji = '🟢';
+      
       const successEmbed = new EmbedBuilder()
-        .setTitle('✅ Marketplace Listing Created!')
-        .setDescription(`Your **${operation.toUpperCase()}** listing has been successfully created on UEX Corp.`)
-        .setColor(0x00ff00)
-        .addFields([
-          {
-            name: '📝 Listing Details',
-            value: `**${title}**\n${description || 'No description provided'}`,
-            inline: false
-          },
-          {
-            name: '💰 Price & Quantity',
-            value: `**${Number(price).toLocaleString()} aUEC** per ${unit}\n**${quantity.toLocaleString()}** ${unit} available`,
-            inline: true
-          },
-          {
-            name: '📍 Location',
-            value: location,
-            inline: true
-          },
-          {
-            name: '📊 Listing Type',
-            value: `${type.toUpperCase()} ${operation.toUpperCase()}`,
-            inline: true
-          },
-          {
-            name: '🏷️ Category',
-            value: getCategoryName(category),
-            inline: true
-          },
-          {
-            name: '⏰ Duration',
-            value: `${duration} day${duration !== 1 ? 's' : ''}`,
-            inline: true
-          },
-          {
-            name: '📞 Contact',
-            value: contact || 'Discord: ' + interaction.user.username,
-            inline: true
-          }
-        ]);
+        .setTitle(`✅ ${operationText} Listing Created!`)
+        .setDescription(`Your **${operationText}** listing is now **live** on the UEX Marketplace`)
+        .setColor(operation === 'sell' ? 0x00ff00 : 0x0099ff);
 
-      // Add image if provided
-      if (imageUrl) {
-        successEmbed.setImage(imageUrl);
+      // Add main listing info in website-style format
+      successEmbed.addFields([
+        {
+          name: `${operationEmoji} ${title}`,
+          value: `**${Number(price).toLocaleString()} aUEC** per ${unit} | **${quantity.toLocaleString()}** ${unit} ${operation === 'sell' ? 'available' : 'needed'}\n` +
+                 `📍 **${location}** | ${statusEmoji} **Active**\n` +
+                 `🏷️ **${getCategoryName(category)}** • **${type.toUpperCase()}** listing`,
+          inline: false
+        }
+      ]);
+
+      // Add description if provided
+      if (description) {
         successEmbed.addFields([
           {
-            name: '🖼️ Image',
-            value: '[View Image](' + imageUrl + ')',
-            inline: true
+            name: '📝 Description',
+            value: description.length > 200 ? description.substring(0, 200) + '...' : description,
+            inline: false
           }
         ]);
       }
 
+      // Add contact and duration info in compact format
+      successEmbed.addFields([
+        {
+          name: '📞 Contact Info',
+          value: contact || `Discord: ${interaction.user.username}`,
+          inline: true
+        },
+        {
+          name: '⏰ Duration',
+          value: `${duration} day${duration !== 1 ? 's' : ''}`,
+          inline: true
+        },
+        {
+          name: '📊 Total Value',
+          value: `**${(price * quantity).toLocaleString()} aUEC**`,
+          inline: true
+        }
+      ]);
+
+      // Add listing ID if available
       if (result.listingId) {
         successEmbed.addFields([
           {
             name: '🆔 Listing ID',
-            value: `\`${result.listingId}\``,
+            value: `\`${result.listingId}\` • Use this ID to manage your listing`,
+            inline: false
+          }
+        ]);
+      }
+
+      // Set image prominently like the website
+      if (imageUrl) {
+        successEmbed.setImage(imageUrl);
+        successEmbed.addFields([
+          {
+            name: '🖼️ Image Preview',
+            value: 'Your listing image is displayed above',
             inline: false
           }
         ]);
       }
 
       successEmbed
-        .setFooter({ text: 'UEX Marketplace • Your listing is now live!' })
+        .setFooter({ text: 'UEX Marketplace • Your listing is now visible to all traders!' })
         .setTimestamp();
 
       // Add action buttons

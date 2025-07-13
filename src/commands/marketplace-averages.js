@@ -159,42 +159,63 @@ module.exports = {
         }
 
         const averagesEmbed = new EmbedBuilder()
-          .setTitle(`📊 Price Averages: ${itemData.name || itemSlug}`)
-          .setDescription(`Market price analysis for **${itemData.name || itemSlug}**`)
-          .setColor(0x0099ff)
-          .addFields([
+          .setTitle(`📊 ${itemData.name || itemSlug}`)
+          .setDescription(`**Marketplace Price Analysis** • *Updated hourly from UEX Corp*`)
+          .setColor(0x0099ff);
+
+        // Main price display in website-style card format
+        const avgPrice = Number(itemData.average_price || 0);
+        const maxPrice = Number(itemData.max_price || 0);
+        const minPrice = Number(itemData.min_price || 0);
+        const totalListings = itemData.total_listings || 0;
+        
+        // Calculate price range percentage
+        const priceRange = maxPrice > minPrice ? Math.round(((maxPrice - minPrice) / minPrice) * 100) : 0;
+        const priceRangeText = priceRange > 0 ? ` (${priceRange}% range)` : '';
+
+        averagesEmbed.addFields([
+          {
+            name: '💰 Current Market Price',
+            value: `**${avgPrice.toLocaleString()} aUEC** average\n` +
+                   `📈 **${maxPrice.toLocaleString()} aUEC** highest\n` +
+                   `📉 **${minPrice.toLocaleString()} aUEC** lowest${priceRangeText}`,
+            inline: false
+          },
+          {
+            name: '📊 Market Activity',
+            value: `**${totalListings}** active listings\n` +
+                   `📦 **${itemData.unit || 'units'}** standard unit\n` +
+                   `⏰ ${itemData.last_updated || 'Recently updated'}`,
+            inline: false
+          }
+        ]);
+
+        // Add market insights
+        let marketInsight = '';
+        if (priceRange > 50) {
+          marketInsight = '⚠️ **High price volatility** - prices vary significantly between sellers';
+        } else if (priceRange > 20) {
+          marketInsight = '📊 **Moderate price range** - some variation in seller prices';
+        } else if (priceRange <= 20 && totalListings > 5) {
+          marketInsight = '✅ **Stable market** - consistent pricing across sellers';
+        } else if (totalListings <= 2) {
+          marketInsight = '⚡ **Limited supply** - few active listings available';
+        } else {
+          marketInsight = '📈 **Active market** - good selection of listings';
+        }
+
+        if (marketInsight) {
+          averagesEmbed.addFields([
             {
-              name: '💰 Average Price',
-              value: `**${Number(itemData.average_price || 0).toLocaleString()} aUEC**`,
-              inline: true
-            },
-            {
-              name: '📈 Highest Price',
-              value: `${Number(itemData.max_price || 0).toLocaleString()} aUEC`,
-              inline: true
-            },
-            {
-              name: '📉 Lowest Price',
-              value: `${Number(itemData.min_price || 0).toLocaleString()} aUEC`,
-              inline: true
-            },
-            {
-              name: '📊 Total Listings',
-              value: `${itemData.total_listings || 0} active`,
-              inline: true
-            },
-            {
-              name: '🔄 Last Updated',
-              value: itemData.last_updated || 'Unknown',
-              inline: true
-            },
-            {
-              name: '📦 Unit Type',
-              value: itemData.unit || 'Unknown',
-              inline: true
+              name: '🔍 Market Insight',
+              value: marketInsight,
+              inline: false
             }
-          ])
-          .setFooter({ text: 'UEX Marketplace • Data refreshed hourly' })
+          ]);
+        }
+
+        averagesEmbed
+          .setFooter({ text: 'UEX Marketplace • Use /marketplace-listings to find sellers' })
           .setTimestamp();
 
         await interaction.editReply({ embeds: [averagesEmbed] });
@@ -222,7 +243,7 @@ module.exports = {
           fields: Object.keys(allData[0] || {})
         });
 
-        // Show top 15 items by average price (less restrictive filtering)
+        // Show top 12 items by average price in website-style card format
         const sortedData = allData
           .filter(item => item && (item.average_price || item.avg_price || item.price) && 
                          (item.name || item.slug || item.item_name))
@@ -231,7 +252,7 @@ module.exports = {
             const priceB = b.average_price || b.avg_price || b.price || 0;
             return priceB - priceA;
           })
-          .slice(0, 15);
+          .slice(0, 12);
 
         if (sortedData.length === 0) {
           const debugEmbed = new EmbedBuilder()
@@ -253,34 +274,105 @@ module.exports = {
         }
 
         const allAveragesEmbed = new EmbedBuilder()
-          .setTitle('📊 Marketplace Price Averages - Top Items')
-          .setDescription(`Showing top ${sortedData.length} items by average price`)
+          .setTitle('🏪 UEX Marketplace - Price Averages')
+          .setDescription(`**Top ${sortedData.length} Items by Average Price** • *Copy slugs for detailed analysis*`)
           .setColor(0x0099ff);
 
-        // Add items as fields with flexible field names
-        sortedData.forEach((item, index) => {
-          const avgPrice = item.average_price || item.avg_price || item.price || 0;
-          const maxPrice = item.max_price || item.high_price || item.highest_price || avgPrice;
-          const minPrice = item.min_price || item.low_price || item.lowest_price || avgPrice;
-          const listings = item.total_listings || item.listings || item.count || 0;
-          const itemName = item.name || item.item_name || item.slug || 'Unknown Item';
-          const itemSlug = item.slug || item.item_slug || 'unknown';
+        // Group items by price ranges for better organization (like website categories)
+        const highValue = sortedData.filter(item => {
+          const price = item.average_price || item.avg_price || item.price || 0;
+          return price >= 100000; // 100K+ aUEC
+        });
+        
+        const midValue = sortedData.filter(item => {
+          const price = item.average_price || item.avg_price || item.price || 0;
+          return price >= 10000 && price < 100000; // 10K-100K aUEC
+        });
+        
+        const lowValue = sortedData.filter(item => {
+          const price = item.average_price || item.avg_price || item.price || 0;
+          return price < 10000; // Under 10K aUEC
+        });
 
-          const value = `💰 **${Number(avgPrice).toLocaleString()} aUEC** avg\n` +
-                       `📈 ${Number(maxPrice).toLocaleString()} high • 📉 ${Number(minPrice).toLocaleString()} low\n` +
-                       `📊 ${listings} listings • 🏷️ \`${itemSlug}\``;
+        // Display high-value items (like premium items on website)
+        if (highValue.length > 0) {
+          const highValueSection = highValue.slice(0, 4).map((item, index) => {
+            const avgPrice = item.average_price || item.avg_price || item.price || 0;
+            const listings = item.total_listings || item.listings || item.count || 0;
+            const itemName = item.name || item.item_name || item.slug || 'Unknown Item';
+            const itemSlug = item.slug || item.item_slug || 'unknown';
+
+            return `💎 **${itemName}**\n` +
+                   `💰 **${Number(avgPrice).toLocaleString()} aUEC** avg\n` +
+                   `📊 ${listings} listings • 🏷️ \`${itemSlug}\``;
+          }).join('\n\n');
 
           allAveragesEmbed.addFields([
             {
-              name: `${index + 1}. ${itemName}`,
-              value: value,
-              inline: true
+              name: '💎 Premium Items (100K+ aUEC)',
+              value: highValueSection,
+              inline: false
             }
           ]);
-        });
+        }
+
+        // Display mid-value items (mainstream market)
+        if (midValue.length > 0) {
+          const midValueSection = midValue.slice(0, 4).map((item, index) => {
+            const avgPrice = item.average_price || item.avg_price || item.price || 0;
+            const listings = item.total_listings || item.listings || item.count || 0;
+            const itemName = item.name || item.item_name || item.slug || 'Unknown Item';
+            const itemSlug = item.slug || item.item_slug || 'unknown';
+
+            return `⭐ **${itemName}**\n` +
+                   `💰 **${Number(avgPrice).toLocaleString()} aUEC** avg\n` +
+                   `📊 ${listings} listings • 🏷️ \`${itemSlug}\``;
+          }).join('\n\n');
+
+          allAveragesEmbed.addFields([
+            {
+              name: '⭐ Popular Items (10K-100K aUEC)',
+              value: midValueSection,
+              inline: false
+            }
+          ]);
+        }
+
+        // Display low-value items (entry level)
+        if (lowValue.length > 0) {
+          const lowValueSection = lowValue.slice(0, 4).map((item, index) => {
+            const avgPrice = item.average_price || item.avg_price || item.price || 0;
+            const listings = item.total_listings || item.listings || item.count || 0;
+            const itemName = item.name || item.item_name || item.slug || 'Unknown Item';
+            const itemSlug = item.slug || item.item_slug || 'unknown';
+
+            return `🔷 **${itemName}**\n` +
+                   `💰 **${Number(avgPrice).toLocaleString()} aUEC** avg\n` +
+                   `📊 ${listings} listings • 🏷️ \`${itemSlug}\``;
+          }).join('\n\n');
+
+          allAveragesEmbed.addFields([
+            {
+              name: '🔷 Entry Level Items (Under 10K aUEC)',
+              value: lowValueSection,
+              inline: false
+            }
+          ]);
+        }
+
+        // Add summary and usage instructions
+        allAveragesEmbed.addFields([
+          {
+            name: '🔍 How to Use',
+            value: `• Copy any **slug** above (e.g., \`titanium\`)\n` +
+                   `• Use \`/marketplace-averages item slug:SLUG\` for detailed analysis\n` +
+                   `• Use \`/marketplace-listings slug:SLUG\` to find sellers`,
+            inline: false
+          }
+        ]);
 
         allAveragesEmbed
-          .setFooter({ text: `UEX Marketplace • Showing ${sortedData.length} of ${allData.length} items • Copy slugs for specific queries` })
+          .setFooter({ text: `UEX Marketplace • Showing ${sortedData.length} of ${allData.length} items • Organized by price range` })
           .setTimestamp();
 
         await interaction.editReply({ embeds: [allAveragesEmbed] });

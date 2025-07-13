@@ -94,56 +94,124 @@ module.exports = {
         return;
       }
 
-      // Create embed with listings (show first 10)
-      const displayListings = listings.slice(0, 10);
+      // Create embed with listings (show first 8 for better visual layout)
+      const displayListings = listings.slice(0, 8);
       const listingsEmbed = new EmbedBuilder()
         .setTitle('🏪 UEX Marketplace Listings')
-        .setDescription(`Found ${listings.length} active listing${listings.length !== 1 ? 's' : ''} ${filters.username ? `by **${filters.username}**` : ''}`)
+        .setDescription(`Found **${listings.length}** active listing${listings.length !== 1 ? 's' : ''} ${filters.username ? `by **${filters.username}**` : ''}`)
         .setColor(0x00ff00);
 
-      // Add listings as fields
-      displayListings.forEach((listing, index) => {
-        const operationType = listing.operation?.toUpperCase() || 'UNKNOWN';
-        const operationEmoji = operationType === 'WTS' ? '💰' : operationType === 'WTB' ? '🛒' : '🔄';
-        
-        const priceInfo = listing.price ? `${Number(listing.price).toLocaleString()} aUEC` : 'Price not listed';
-        const unitInfo = listing.unit ? ` per ${listing.unit}` : '';
-        
-        let value = `${operationEmoji} **${operationType}** • ${listing.type || 'Unknown Item'}\n` +
-                     `💵 **${priceInfo}**${unitInfo}\n` +
-                     `📍 **Location:** ${listing.location || 'Not specified'}\n` +
-                     `👤 **Seller:** ${listing.username || 'Unknown'}\n` +
-                     `📊 **Stock:** ${listing.quantity || 'Not specified'}\n` +
-                     `⏰ **Updated:** ${listing.updated ? new Date(listing.updated).toLocaleDateString() : 'Unknown'}`;
+      // Group listings by operation type for better organization
+      const wtsSell = displayListings.filter(l => l.operation?.toLowerCase() === 'sell' || l.operation?.toUpperCase() === 'WTS');
+      const wtbBuy = displayListings.filter(l => l.operation?.toLowerCase() === 'buy' || l.operation?.toUpperCase() === 'WTB');
+      const trading = displayListings.filter(l => l.operation?.toLowerCase() === 'trade' || l.operation?.toUpperCase() === 'TRADING');
+      const other = displayListings.filter(l => !wtsSell.includes(l) && !wtbBuy.includes(l) && !trading.includes(l));
 
-        // Add image info if available
-        if (listing.image_url) {
-          value += `\n🖼️ **Image:** [View Image](${listing.image_url})`;
-        }
+      // Display WTS (Want to Sell) listings first
+      if (wtsSell.length > 0) {
+        const wtsSection = wtsSell.slice(0, 4).map((listing, index) => {
+          const priceInfo = listing.price ? `**${Number(listing.price).toLocaleString()} aUEC**` : '💰 *Price negotiable*';
+          const unitInfo = listing.unit ? ` per ${listing.unit}` : '';
+          const stockInfo = listing.quantity ? `📦 **Stock:** ${listing.quantity}` : '📦 *Stock available*';
+          const locationInfo = listing.location ? `📍 **${listing.location}**` : '📍 *Location TBD*';
+          const sellerInfo = listing.username ? `👤 **${listing.username}**` : '👤 *Seller*';
+          const updatedInfo = listing.updated ? `⏰ ${new Date(listing.updated).toLocaleDateString()}` : '⏰ *Recently*';
+          
+          // Add status indicator
+          const statusEmoji = listing.status === 'active' ? '🟢' : listing.status === 'sold' ? '🔴' : '🟡';
+          const statusText = listing.status === 'active' ? 'Active' : listing.status === 'sold' ? 'Sold Out' : 'Unknown';
+          
+          return `**${listing.title || listing.type || 'Untitled Item'}**\n` +
+                 `💰 ${priceInfo}${unitInfo} | ${stockInfo}\n` +
+                 `${locationInfo} | ${sellerInfo}\n` +
+                 `${statusEmoji} ${statusText} | ${updatedInfo}` +
+                 (listing.image_url ? `\n🖼️ [View Image](${listing.image_url})` : '');
+        }).join('\n\n');
 
         listingsEmbed.addFields([
           {
-            name: `${index + 1}. ${listing.title || listing.type || 'Untitled Listing'}`,
-            value: value,
-            inline: true
+            name: '💰 Want to Sell (WTS) Listings',
+            value: wtsSection || 'No WTS listings found',
+            inline: false
           }
         ]);
-      });
+      }
 
-      // Set thumbnail to first listing with image
+      // Display WTB (Want to Buy) listings
+      if (wtbBuy.length > 0) {
+        const wtbSection = wtbBuy.slice(0, 3).map((listing, index) => {
+          const priceInfo = listing.price ? `**${Number(listing.price).toLocaleString()} aUEC**` : '💰 *Price negotiable*';
+          const unitInfo = listing.unit ? ` per ${listing.unit}` : '';
+          const quantityInfo = listing.quantity ? `📦 **Seeking:** ${listing.quantity}` : '📦 *Quantity needed*';
+          const locationInfo = listing.location ? `📍 **${listing.location}**` : '📍 *Location flexible*';
+          const buyerInfo = listing.username ? `👤 **${listing.username}**` : '👤 *Buyer*';
+          const updatedInfo = listing.updated ? `⏰ ${new Date(listing.updated).toLocaleDateString()}` : '⏰ *Recently*';
+          
+          // Add status indicator
+          const statusEmoji = listing.status === 'active' ? '🟢' : listing.status === 'completed' ? '✅' : '🟡';
+          const statusText = listing.status === 'active' ? 'Active' : listing.status === 'completed' ? 'Fulfilled' : 'Unknown';
+          
+          return `**${listing.title || listing.type || 'Untitled Request'}**\n` +
+                 `💰 ${priceInfo}${unitInfo} | ${quantityInfo}\n` +
+                 `${locationInfo} | ${buyerInfo}\n` +
+                 `${statusEmoji} ${statusText} | ${updatedInfo}` +
+                 (listing.image_url ? `\n🖼️ [View Image](${listing.image_url})` : '');
+        }).join('\n\n');
+
+        listingsEmbed.addFields([
+          {
+            name: '🛒 Want to Buy (WTB) Requests',
+            value: wtbSection || 'No WTB requests found',
+            inline: false
+          }
+        ]);
+      }
+
+      // Display Trading listings
+      if (trading.length > 0) {
+        const tradingSection = trading.slice(0, 2).map((listing, index) => {
+          const sellerInfo = listing.username ? `👤 **${listing.username}**` : '👤 *Trader*';
+          const locationInfo = listing.location ? `📍 **${listing.location}**` : '📍 *Location TBD*';
+          const updatedInfo = listing.updated ? `⏰ ${new Date(listing.updated).toLocaleDateString()}` : '⏰ *Recently*';
+          
+          return `**${listing.title || listing.type || 'Trade Offer'}**\n` +
+                 `🔄 Trade offer | ${sellerInfo}\n` +
+                 `${locationInfo} | ${updatedInfo}` +
+                 (listing.image_url ? `\n🖼️ [View Image](${listing.image_url})` : '');
+        }).join('\n\n');
+
+        listingsEmbed.addFields([
+          {
+            name: '🔄 Trading Offers',
+            value: tradingSection || 'No trading offers found',
+            inline: false
+          }
+        ]);
+      }
+
+      // Set main image to first listing with image (like website's main image)
       const firstListingWithImage = displayListings.find(listing => listing.image_url);
       if (firstListingWithImage) {
-        listingsEmbed.setThumbnail(firstListingWithImage.image_url);
+        listingsEmbed.setImage(firstListingWithImage.image_url);
+      }
+
+      // Add summary field if there are multiple categories
+      const totalDisplayed = Math.min(4, wtsSell.length) + Math.min(3, wtbBuy.length) + Math.min(2, trading.length);
+      if (listings.length > totalDisplayed) {
+        listingsEmbed.addFields([
+          {
+            name: '📊 Marketplace Summary',
+            value: `📈 **${wtsSell.length}** WTS listings | 📉 **${wtbBuy.length}** WTB requests | 🔄 **${trading.length}** trades\n` +
+                   `Showing **${totalDisplayed}** of **${listings.length}** total listings`,
+            inline: false
+          }
+        ]);
       }
 
       // Add footer with additional info
-      if (listings.length > 10) {
-        listingsEmbed.setFooter({ 
-          text: `UEX Marketplace • Showing first 10 of ${listings.length} listings` 
-        });
-      } else {
-        listingsEmbed.setFooter({ text: 'UEX Marketplace' });
-      }
+      listingsEmbed.setFooter({ 
+        text: `UEX Marketplace • ${listings.length > totalDisplayed ? `Showing ${totalDisplayed} of ${listings.length} listings` : 'All current listings'}` 
+      });
 
       listingsEmbed.setTimestamp();
 
