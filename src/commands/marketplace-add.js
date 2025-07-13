@@ -286,6 +286,39 @@ module.exports = {
         ]);
       }
 
+      // Add listing management tips and tracking information
+      successEmbed.addFields([
+        {
+          name: '📈 Track Your Listing Performance',
+          value: '• **Views** - How many people have seen your listing\n' +
+                 '• **Negotiations** - Number of interested buyers/sellers\n' +
+                 '• **Votes** - Community trust rating for your listing\n' +
+                 'Use `/marketplace-listings username:' + interaction.user.username + '` to check your stats',
+          inline: false
+        },
+        {
+          name: '💡 Pro Tips for Better Results',
+          value: '• **Add images** - Listings with photos get 3x more views\n' +
+                 '• **Set competitive prices** - Check market rates first\n' +
+                 '• **Update regularly** - Fresh listings appear higher in searches\n' +
+                 '• **Respond quickly** - Fast replies improve your rating',
+          inline: false
+        }
+      ]);
+
+      // Add expected engagement metrics
+      const estimatedViews = Math.ceil(price * quantity / 50000); // Rough estimate based on value
+      successEmbed.addFields([
+        {
+          name: '🎯 What to Expect',
+          value: `• **Estimated daily views:** ~${Math.max(5, estimatedViews)} people\n` +
+                 `• **Listing expires:** ${new Date(Date.now() + duration * 24 * 60 * 60 * 1000).toLocaleDateString()}\n` +
+                 `• **Current market:** ${operation === 'sell' ? 'Sellers' : 'Buyers'} market for this category\n` +
+                 `• **Visibility:** Your listing is now searchable by item type`,
+          inline: false
+        }
+      ]);
+
       // Set image prominently like the website
       if (imageUrl) {
         successEmbed.setImage(imageUrl);

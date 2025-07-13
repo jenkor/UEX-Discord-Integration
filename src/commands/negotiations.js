@@ -128,43 +128,106 @@ module.exports = {
         .setDescription(`You have **${negotiations.length}** total negotiation${negotiations.length !== 1 ? 's' : ''}`)
         .setColor(0x0099ff);
 
-      // Show active negotiations first (up to 5)
+      // Show active negotiations first (up to 5) with enhanced information
       if (activeNegotiations.length > 0) {
         const displayActive = activeNegotiations.slice(0, 5);
+        
+        const activeSection = displayActive.map((negotiation, index) => {
+          // Enhanced negotiation information using rich API data
+          const listingTitle = negotiation.listing_title || negotiation.item_name || 'Unknown Item';
+          const listingSlug = negotiation.listing_slug ? `\`${negotiation.listing_slug}\`` : '';
+          const price = negotiation.price || negotiation.offered_price || 0;
+          const unit = negotiation.unit || 'units';
+          
+          // Determine if user is advertiser (seller) or client (buyer)
+          const isAdvertiser = negotiation.is_listing_advertiser === 1;
+          const userRole = isAdvertiser ? 'Seller' : 'Buyer';
+          const otherRole = isAdvertiser ? 'Buyer' : 'Seller';
+          const roleEmoji = isAdvertiser ? '💰' : '🛒';
+          
+          // Get other party information
+          const otherPartyName = isAdvertiser ? 
+            (negotiation.client_username || negotiation.client_name || 'Unknown Buyer') :
+            (negotiation.advertiser_username || negotiation.advertiser_name || 'Unknown Seller');
+          
+          // Add avatar links if available
+          let otherPartyInfo = `${otherRole}: **${otherPartyName}**`;
+          if (isAdvertiser && negotiation.client_avatar) {
+            otherPartyInfo += ` [👤](${negotiation.client_avatar})`;
+          } else if (!isAdvertiser && negotiation.advertiser_avatar) {
+            otherPartyInfo += ` [👤](${negotiation.advertiser_avatar})`;
+          }
+          
+          // Add timing information
+          let timingInfo = '';
+          if (negotiation.date_added) {
+            const startedDate = new Date(negotiation.date_added * 1000);
+            timingInfo += `📅 Started: ${startedDate.toLocaleDateString()}`;
+          }
+          if (negotiation.date_modified && negotiation.date_modified !== negotiation.date_added) {
+            const modifiedDate = new Date(negotiation.date_modified * 1000);
+            timingInfo += ` • 🔄 Last activity: ${modifiedDate.toLocaleDateString()}`;
+          }
+          
+          return `${roleEmoji} **${listingTitle}** ${listingSlug}\n` +
+                 `💰 **${Number(price).toLocaleString()} aUEC** per ${unit} • You are: **${userRole}**\n` +
+                 `👥 ${otherPartyInfo}\n` +
+                 `🔗 Hash: \`${negotiation.hash}\`\n` +
+                 `${timingInfo}`;
+        }).join('\n\n');
         
         negotiationsEmbed.addFields([
           {
             name: `🟢 Active Negotiations (${activeNegotiations.length})`,
-            value: displayActive.map((negotiation, index) => {
-              const itemName = negotiation.listing?.title || negotiation.item_name || 'Unknown Item';
-              const price = negotiation.offered_price || negotiation.price || 0;
-              const otherUser = negotiation.buyer_username || negotiation.seller_username || 'Unknown User';
-              const role = negotiation.buyer_username ? 'Seller' : 'Buyer';
-              
-              return `**${index + 1}.** ${itemName}\n` +
-                     `💰 ${Number(price).toLocaleString()} aUEC • ${role}: ${otherUser}\n` +
-                     `🔗 Hash: \`${negotiation.hash}\``;
-            }).join('\n\n'),
+            value: activeSection,
             inline: false
           }
         ]);
       }
 
-      // Show completed negotiations (up to 3)
+      // Show completed negotiations (up to 3) with enhanced details
       if (completedNegotiations.length > 0) {
         const displayCompleted = completedNegotiations.slice(0, 3);
+        
+        const completedSection = displayCompleted.map((negotiation, index) => {
+          const listingTitle = negotiation.listing_title || negotiation.item_name || 'Unknown Item';
+          const listingSlug = negotiation.listing_slug ? `\`${negotiation.listing_slug}\`` : '';
+          const finalPrice = negotiation.final_price || negotiation.price || negotiation.offered_price || 0;
+          const unit = negotiation.unit || 'units';
+          
+          // Determine user role in this negotiation
+          const isAdvertiser = negotiation.is_listing_advertiser === 1;
+          const userRole = isAdvertiser ? 'Sold as' : 'Bought as';
+          const roleEmoji = isAdvertiser ? '💰' : '🛒';
+          
+          // Get completion timing
+          let completionInfo = '';
+          if (negotiation.date_closed) {
+            const closedDate = new Date(negotiation.date_closed * 1000);
+            completionInfo = `✅ Completed: ${closedDate.toLocaleDateString()}`;
+          } else if (negotiation.date_closed_client) {
+            const closedDate = new Date(negotiation.date_closed_client * 1000);
+            completionInfo = `✅ Completed: ${closedDate.toLocaleDateString()}`;
+          }
+          
+          // Calculate duration if we have start and end dates
+          let durationInfo = '';
+          if (negotiation.date_added && (negotiation.date_closed || negotiation.date_closed_client)) {
+            const startTime = negotiation.date_added * 1000;
+            const endTime = (negotiation.date_closed || negotiation.date_closed_client) * 1000;
+            const durationDays = Math.ceil((endTime - startTime) / (1000 * 60 * 60 * 24));
+            durationInfo = ` • ⏱️ Duration: ${durationDays} day${durationDays !== 1 ? 's' : ''}`;
+          }
+          
+          return `${roleEmoji} **${listingTitle}** ${listingSlug}\n` +
+                 `💰 **${Number(finalPrice).toLocaleString()} aUEC** per ${unit} • ${userRole}\n` +
+                 `${completionInfo}${durationInfo}`;
+        }).join('\n\n');
         
         negotiationsEmbed.addFields([
           {
             name: `✅ Recent Completed (${completedNegotiations.length})`,
-            value: displayCompleted.map((negotiation, index) => {
-              const itemName = negotiation.listing?.title || negotiation.item_name || 'Unknown Item';
-              const price = negotiation.final_price || negotiation.offered_price || negotiation.price || 0;
-              const completedDate = negotiation.completed_at || negotiation.updated_at || 'Unknown';
-              
-              return `**${index + 1}.** ${itemName} - ${Number(price).toLocaleString()} aUEC\n` +
-                     `📅 ${completedDate}`;
-            }).join('\n\n'),
+            value: completedSection,
             inline: false
           }
         ]);

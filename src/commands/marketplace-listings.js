@@ -125,7 +125,7 @@ module.exports = {
         .setDescription(`**Page ${page} of ${totalPages}** • Found **${allListings.length}** listing${allListings.length !== 1 ? 's' : ''} ${getFilterDescription(filters)}`)
         .setColor(0x00ff00);
 
-      // Display each listing as a detailed card
+      // Display each listing as a detailed card with rich API data
       currentListings.forEach((listing, index) => {
         const actualIndex = startIndex + index + 1;
         const operationType = listing.operation?.toUpperCase() || 'UNKNOWN';
@@ -134,14 +134,64 @@ module.exports = {
         
         const priceInfo = listing.price ? `**${Number(listing.price).toLocaleString()} aUEC**` : '💰 *Price negotiable*';
         const unitInfo = listing.unit ? ` per ${listing.unit}` : '';
-        const stockInfo = listing.quantity ? `📦 **${listing.quantity}** ${listing.unit || 'units'}` : '📦 *Stock available*';
-        const locationInfo = listing.location ? `📍 **${listing.location}**` : '📍 *Location TBD*';
-        const traderInfo = listing.username ? `👤 **${listing.username}**` : '👤 *Trader*';
-        const updatedInfo = listing.updated ? `⏰ ${new Date(listing.updated).toLocaleDateString()}` : '⏰ *Recently*';
         
-        // Add status indicator
-        const statusEmoji = listing.status === 'active' ? '🟢' : listing.status === 'sold' ? '🔴' : '🟡';
-        const statusText = listing.status === 'active' ? 'Active' : listing.status === 'sold' ? 'Sold Out' : 'Unknown';
+        // Show price change if price_old exists
+        let priceDisplay = priceInfo + unitInfo;
+        if (listing.price_old && listing.price_old !== listing.price) {
+          const priceChange = ((listing.price - listing.price_old) / listing.price_old) * 100;
+          const changeEmoji = priceChange > 0 ? '📈' : '📉';
+          const changeText = priceChange > 0 ? `+${priceChange.toFixed(1)}%` : `${priceChange.toFixed(1)}%`;
+          priceDisplay += ` ${changeEmoji} ${changeText}`;
+        }
+        
+        const stockInfo = listing.in_stock ? `📦 **${listing.in_stock}** ${listing.unit || 'units'}` : '📦 *Stock available*';
+        const locationInfo = listing.location ? `📍 **${listing.location}**` : '📍 *Location TBD*';
+        const traderInfo = listing.user_username ? `👤 **${listing.user_username}**` : '👤 *Trader*';
+        
+        // Enhanced status with sold out detection
+        const isSoldOut = listing.is_sold_out === 1 || listing.in_stock === 0;
+        const statusEmoji = isSoldOut ? '🔴' : (listing.operation === 'sell' ? '🟢' : '🔵');
+        const statusText = isSoldOut ? 'Sold Out' : 'Active';
+        
+        // Add popularity and engagement metrics
+        let popularityInfo = '';
+        if (listing.total_views || listing.total_negotiations || listing.votes) {
+          const views = listing.total_views || 0;
+          const negotiations = listing.total_negotiations || 0;
+          const votes = listing.votes || 0;
+          popularityInfo = `\n📊 **${views}** views • **${negotiations}** negotiations • ⭐ **${votes}** votes`;
+        }
+        
+        // Add item source information
+        let sourceInfo = '';
+        if (listing.source) {
+          const sourceEmojis = {
+            looted: '💀 Looted',
+            pledged: '🏆 Pledged', 
+            purchased_in_game: '🛒 Purchased',
+            pirated: '🏴‍☠️ Pirated',
+            gifted: '🎁 Gifted'
+          };
+          sourceInfo = `\n🔍 **Source:** ${sourceEmojis[listing.source] || listing.source}`;
+        }
+        
+        // Add expiration information
+        let expirationInfo = '';
+        if (listing.date_expiration) {
+          const expirationDate = new Date(listing.date_expiration * 1000);
+          const timeRemaining = expirationDate.getTime() - Date.now();
+          const daysRemaining = Math.ceil(timeRemaining / (1000 * 60 * 60 * 24));
+          
+          if (daysRemaining > 0) {
+            expirationInfo = `\n⏳ **Expires:** ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} (${expirationDate.toLocaleDateString()})`;
+          } else {
+            expirationInfo = `\n⚠️ **Expired:** ${expirationDate.toLocaleDateString()}`;
+          }
+        }
+        
+        const updatedInfo = listing.date_added ? 
+          `⏰ Listed ${new Date(listing.date_added * 1000).toLocaleDateString()}` : 
+          '⏰ *Recently*';
         
         // Create item information with discoverable IDs
         let itemInfo = `**${listing.title || listing.type || 'Untitled Listing'}**`;
@@ -153,23 +203,36 @@ module.exports = {
         if (listing.id && listing.id !== listing.slug) {
           itemInfo += `\n🆔 **Listing ID:** \`${listing.id}\``;
         }
-        if (listing.item_id && listing.item_id !== listing.slug) {
-          itemInfo += `\n📦 **Item ID:** \`${listing.item_id}\``;
+        if (listing.id_item && listing.id_item !== listing.slug) {
+          itemInfo += `\n📦 **Item ID:** \`${listing.id_item}\``;
         }
 
-        let valueText = `${operationEmoji} **${operationType}** • ${priceInfo}${unitInfo}\n` +
+        let valueText = `${operationEmoji} **${operationType}** • ${priceDisplay}\n` +
                        `${stockInfo} • ${statusEmoji} ${statusText}\n` +
                        `${locationInfo} • ${traderInfo}\n` +
-                       `${updatedInfo}`;
+                       `${updatedInfo}${popularityInfo}${sourceInfo}${expirationInfo}`;
 
-        // Add image link if available
-        if (listing.image_url) {
+        // Add multiple images if available (photos is an array)
+        if (listing.photos && Array.isArray(listing.photos) && listing.photos.length > 0) {
+          const imageLinks = listing.photos.slice(0, 3).map((photo, i) => `[Image ${i + 1}](${photo})`).join(' • ');
+          valueText += `\n🖼️ **Images:** ${imageLinks}`;
+        } else if (listing.image_url) {
           valueText += `\n🖼️ [View Image](${listing.image_url})`;
+        }
+
+        // Add video link if available
+        if (listing.video_url) {
+          valueText += `\n🎥 [Watch Video](${listing.video_url})`;
         }
 
         // Add contact info if available
         if (listing.contact_info) {
           valueText += `\n📞 ${listing.contact_info}`;
+        }
+
+        // Add user avatar if available
+        if (listing.user_avatar) {
+          valueText += `\n👤 [Trader Profile](${listing.user_avatar})`;
         }
 
         listingsEmbed.addFields([

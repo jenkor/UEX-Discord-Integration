@@ -408,78 +408,7 @@ async function createMarketplaceListing(listingData, credentials) {
   }
 }
 
-/**
- * Get marketplace averages for specific item
- * @param {string} itemSlug - Item slug to get averages for
- * @param {object} credentials - API credentials {apiToken, secretKey}
- * @returns {Promise<{success: boolean, data?: object, error?: string}>}
- */
-async function getMarketplaceAverages(itemSlug, credentials) {
-  try {
-    logger.uex('Fetching marketplace averages', { itemSlug });
-    
-    const response = await fetch(`${config.UEX_API_BASE_URL}/marketplace_averages/?slug=${itemSlug}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${credentials.apiToken}`,
-        'secret_key': credentials.secretKey,
-        'User-Agent': 'UEX-Discord-Bot/2.0-MultiUser'
-      }
-    });
 
-    const responseData = await response.json();
-    logger.uex('Marketplace averages response', { 
-      status: response.status, 
-      itemSlug 
-    });
-
-    if (response.ok) {
-      return { success: true, data: responseData.data };
-    } else {
-      return { success: false, error: responseData.message || 'Failed to fetch marketplace averages' };
-    }
-
-  } catch (error) {
-    logger.error('Error fetching marketplace averages', { error: error.message });
-    return { success: false, error: error.message };
-  }
-}
-
-/**
- * Get all marketplace averages
- * @param {object} credentials - API credentials {apiToken, secretKey}
- * @returns {Promise<{success: boolean, data?: array, error?: string}>}
- */
-async function getMarketplaceAveragesAll(credentials) {
-  try {
-    logger.uex('Fetching all marketplace averages');
-    
-    const response = await fetch(`${config.UEX_API_BASE_URL}/marketplace_averages_all/`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${credentials.apiToken}`,
-        'secret_key': credentials.secretKey,
-        'User-Agent': 'UEX-Discord-Bot/2.0-MultiUser'
-      }
-    });
-
-    const responseData = await response.json();
-    logger.uex('All marketplace averages response', { 
-      status: response.status, 
-      count: responseData.data?.length || 0 
-    });
-
-    if (response.ok) {
-      return { success: true, data: responseData.data || [] };
-    } else {
-      return { success: false, error: responseData.message || 'Failed to fetch all marketplace averages' };
-    }
-
-  } catch (error) {
-    logger.error('Error fetching all marketplace averages', { error: error.message });
-    return { success: false, error: error.message };
-  }
-}
 
 /**
  * Get user's marketplace negotiations
@@ -527,7 +456,5 @@ module.exports = {
   getNegotiationDetails,
   getMarketplaceListings,
   createMarketplaceListing,
-  getMarketplaceAverages,
-  getMarketplaceAveragesAll,
   getMarketplaceNegotiations
 }; 
