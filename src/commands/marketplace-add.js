@@ -96,6 +96,12 @@ module.exports = {
         .setRequired(false)
         .setMinValue(1)
         .setMaxValue(30)
+    )
+    .addStringOption(option =>
+      option
+        .setName('image_url')
+        .setDescription('Image URL for your listing (optional)')
+        .setRequired(false)
     ),
 
   async execute(interaction) {
@@ -114,6 +120,7 @@ module.exports = {
       const description = interaction.options.getString('description') || '';
       const contact = interaction.options.getString('contact') || '';
       const duration = interaction.options.getInteger('duration') || 7;
+      const imageUrl = interaction.options.getString('image_url') || '';
 
       logger.command('Marketplace add command used', {
         userId,
@@ -123,7 +130,8 @@ module.exports = {
         type,
         category,
         price,
-        quantity
+        quantity,
+        hasImage: !!imageUrl
       });
 
       // Defer reply since API call might take time
@@ -183,6 +191,11 @@ module.exports = {
         duration_days: duration,
         status: 'active'
       };
+
+      // Add image URL if provided
+      if (imageUrl) {
+        listingData.image_url = imageUrl;
+      }
 
       // Create the marketplace listing
       const result = await uexAPI.createMarketplaceListing(listingData, userResult.credentials);
@@ -253,6 +266,18 @@ module.exports = {
             inline: true
           }
         ]);
+
+      // Add image if provided
+      if (imageUrl) {
+        successEmbed.setImage(imageUrl);
+        successEmbed.addFields([
+          {
+            name: '🖼️ Image',
+            value: '[View Image](' + imageUrl + ')',
+            inline: true
+          }
+        ]);
+      }
 
       if (result.listingId) {
         successEmbed.addFields([

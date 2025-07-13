@@ -118,26 +118,26 @@ module.exports = {
         const itemData = result.data;
         
         if (!itemData) {
-          const noDataEmbed = new EmbedBuilder()
-            .setTitle('📊 No Average Data Found')
-            .setDescription(`No price average data found for item: **${itemSlug}**`)
-            .setColor(0x666666)
+          const notFoundEmbed = new EmbedBuilder()
+            .setTitle('❌ Item Not Found')
+            .setDescription(`No marketplace data found for item slug: **${itemSlug}**`)
+            .setColor(0xff0000)
             .addFields([
               {
-                name: '🔍 Need Help Finding Items?',
-                value: '• Use `/items search` to find item names and slugs\n• Use `/marketplace-averages all` to see all available averages\n• Popular items: `titanium`, `steel`, `hadanite`, `quantanium`',
+                name: '💡 Finding Valid Item Slugs',
+                value: '• Check `/marketplace-listings` to see what items are being traded\n• Common slugs: `titanium`, `steel`, `hadanite`, `quantanium`\n• Item slugs are usually lowercase names without spaces\n• Look at existing marketplace listings for examples',
                 inline: false
               },
               {
-                name: '💡 Tips',
-                value: '• Check the item slug spelling (use lowercase)\n• Some items may not have enough trading data\n• Try searching the UEX marketplace website',
+                name: '🔍 Search Tips',
+                value: '• Try shorter variations (e.g., `steel` instead of `steel-ingot`)\n• Remove spaces and special characters\n• Use the exact slug from marketplace listings\n• Check spelling carefully',
                 inline: false
               }
             ])
-            .setFooter({ text: 'UEX Marketplace • Use /items search to discover item slugs' })
+            .setFooter({ text: 'UEX Marketplace • Use exact slugs from active listings' })
             .setTimestamp();
 
-          await interaction.editReply({ embeds: [noDataEmbed] });
+          await interaction.editReply({ embeds: [notFoundEmbed] });
           return;
         }
 

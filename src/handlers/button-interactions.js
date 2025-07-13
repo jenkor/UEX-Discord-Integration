@@ -791,7 +791,7 @@ async function handleHelpAveragesCommandButton(interaction) {
 
     const helpEmbed = new EmbedBuilder()
       .setTitle('📊 How to Use Marketplace Averages')
-      .setDescription('View price averages and market trends for specific items using the slugs you discovered.')
+      .setDescription('View price averages and market trends for specific items.')
       .setColor(0x0099ff)
       .addFields([
         {
@@ -806,7 +806,7 @@ async function handleHelpAveragesCommandButton(interaction) {
         },
         {
           name: '💡 Finding Item Slugs',
-          value: '• Use `/items search query:metal` to find metal items\n• Use `/items popular` to see commonly traded items\n• Copy the slug from the item results\n• Popular slugs: `titanium`, `steel`, `hadanite`, `quantanium`',
+          value: '• Check marketplace listings for item types\n• Common slugs: `titanium`, `steel`, `hadanite`, `quantanium`\n• View marketplace listings to see what items are being traded\n• Item slugs are usually lowercase names without spaces',
           inline: false
         },
         {
@@ -815,7 +815,7 @@ async function handleHelpAveragesCommandButton(interaction) {
           inline: false
         }
       ])
-      .setFooter({ text: 'UEX Marketplace • Use discovered item slugs in averages commands' })
+      .setFooter({ text: 'UEX Marketplace • Use item slugs from marketplace listings' })
       .setTimestamp();
 
     await interaction.reply({ 

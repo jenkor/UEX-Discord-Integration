@@ -109,12 +109,17 @@ module.exports = {
         const priceInfo = listing.price ? `${Number(listing.price).toLocaleString()} aUEC` : 'Price not listed';
         const unitInfo = listing.unit ? ` per ${listing.unit}` : '';
         
-        const value = `${operationEmoji} **${operationType}** • ${listing.type || 'Unknown Item'}\n` +
+        let value = `${operationEmoji} **${operationType}** • ${listing.type || 'Unknown Item'}\n` +
                      `💵 **${priceInfo}**${unitInfo}\n` +
                      `📍 **Location:** ${listing.location || 'Not specified'}\n` +
                      `👤 **Seller:** ${listing.username || 'Unknown'}\n` +
                      `📊 **Stock:** ${listing.quantity || 'Not specified'}\n` +
                      `⏰ **Updated:** ${listing.updated ? new Date(listing.updated).toLocaleDateString() : 'Unknown'}`;
+
+        // Add image info if available
+        if (listing.image_url) {
+          value += `\n🖼️ **Image:** [View Image](${listing.image_url})`;
+        }
 
         listingsEmbed.addFields([
           {
@@ -124,6 +129,12 @@ module.exports = {
           }
         ]);
       });
+
+      // Set thumbnail to first listing with image
+      const firstListingWithImage = displayListings.find(listing => listing.image_url);
+      if (firstListingWithImage) {
+        listingsEmbed.setThumbnail(firstListingWithImage.image_url);
+      }
 
       // Add footer with additional info
       if (listings.length > 10) {

@@ -163,8 +163,7 @@ function buildHelpResponse(topic) {
             value: '• `/marketplace-listings` - View active marketplace listings and filter results\n' +
                    '• `/marketplace-add` - Create new marketplace listings for your items\n' +
                    '• `/marketplace-averages` - View price averages and market trends\n' +
-                   '• `/negotiations` - View and manage your marketplace negotiations\n' +
-                   '• `/items search` - Find item names and slugs for averages commands',
+                   '• `/negotiations` - View and manage your marketplace negotiations',
             inline: false
           },
           {
