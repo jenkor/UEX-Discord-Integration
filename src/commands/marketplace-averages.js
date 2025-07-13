@@ -125,19 +125,36 @@ module.exports = {
             .addFields([
               {
                 name: '💡 Finding Valid Item Slugs',
-                value: '• Check `/marketplace-listings` to see what items are being traded\n• Common slugs: `titanium`, `steel`, `hadanite`, `quantanium`\n• Item slugs are usually lowercase names without spaces\n• Look at existing marketplace listings for examples',
+                value: '• Check `/marketplace-listings` to see what items are being traded\n• Use `/marketplace-averages all` to see all available slugs\n• Common slugs: `titanium`, `steel`, `hadanite`, `quantanium`\n• Item slugs are usually lowercase names with dashes instead of spaces',
                 inline: false
               },
               {
                 name: '🔍 Search Tips',
-                value: '• Try shorter variations (e.g., `steel` instead of `steel-ingot`)\n• Remove spaces and special characters\n• Use the exact slug from marketplace listings\n• Check spelling carefully',
+                value: '• Try `hadanite` instead of `hadanite ore`\n• Try `steel` instead of `steel ingot`\n• Replace spaces with dashes: `citadel-arms` instead of `citadel arms`\n• Use the exact slug from `/marketplace-averages all` output',
                 inline: false
               }
             ])
-            .setFooter({ text: 'UEX Marketplace • Use exact slugs from active listings' })
+            .setFooter({ text: 'UEX Marketplace • Use exact slugs from marketplace data' })
             .setTimestamp();
 
-          await interaction.editReply({ embeds: [notFoundEmbed] });
+          const helpButtons = new ActionRowBuilder()
+            .addComponents(
+              new ButtonBuilder()
+                .setLabel('📊 View All Averages')
+                .setStyle(ButtonStyle.Secondary)
+                .setCustomId('marketplace_averages_all')
+                .setEmoji('📈'),
+              new ButtonBuilder()
+                .setLabel('🏪 View Marketplace')
+                .setStyle(ButtonStyle.Secondary)
+                .setCustomId('marketplace_listings_all')
+                .setEmoji('🛒')
+            );
+
+          await interaction.editReply({ 
+            embeds: [notFoundEmbed], 
+            components: [helpButtons] 
+          });
           return;
         }
 
@@ -198,26 +215,64 @@ module.exports = {
           return;
         }
 
-        // Show top 15 items by average price
+        // Debug log to see data structure
+        logger.info('Marketplace averages data sample', { 
+          totalItems: allData.length,
+          sampleItem: allData[0],
+          fields: Object.keys(allData[0] || {})
+        });
+
+        // Show top 15 items by average price (less restrictive filtering)
         const sortedData = allData
-          .filter(item => item.average_price > 0)
-          .sort((a, b) => b.average_price - a.average_price)
+          .filter(item => item && (item.average_price || item.avg_price || item.price) && 
+                         (item.name || item.slug || item.item_name))
+          .sort((a, b) => {
+            const priceA = a.average_price || a.avg_price || a.price || 0;
+            const priceB = b.average_price || b.avg_price || b.price || 0;
+            return priceB - priceA;
+          })
           .slice(0, 15);
+
+        if (sortedData.length === 0) {
+          const debugEmbed = new EmbedBuilder()
+            .setTitle('📊 Marketplace Averages Debug')
+            .setDescription(`Found ${allData.length} items but none have valid price data.`)
+            .setColor(0xff9900)
+            .addFields([
+              {
+                name: '🔍 Data Sample',
+                value: `\`\`\`json\n${JSON.stringify(allData.slice(0, 2), null, 2).substring(0, 1000)}\`\`\``,
+                inline: false
+              }
+            ])
+            .setFooter({ text: 'UEX Marketplace • Debug information' })
+            .setTimestamp();
+
+          await interaction.editReply({ embeds: [debugEmbed] });
+          return;
+        }
 
         const allAveragesEmbed = new EmbedBuilder()
           .setTitle('📊 Marketplace Price Averages - Top Items')
           .setDescription(`Showing top ${sortedData.length} items by average price`)
           .setColor(0x0099ff);
 
-        // Add items as fields
+        // Add items as fields with flexible field names
         sortedData.forEach((item, index) => {
-          const value = `💰 **${Number(item.average_price).toLocaleString()} aUEC** avg\n` +
-                       `📈 ${Number(item.max_price).toLocaleString()} high • 📉 ${Number(item.min_price).toLocaleString()} low\n` +
-                       `📊 ${item.total_listings || 0} listings`;
+          const avgPrice = item.average_price || item.avg_price || item.price || 0;
+          const maxPrice = item.max_price || item.high_price || item.highest_price || avgPrice;
+          const minPrice = item.min_price || item.low_price || item.lowest_price || avgPrice;
+          const listings = item.total_listings || item.listings || item.count || 0;
+          const itemName = item.name || item.item_name || item.slug || 'Unknown Item';
+          const itemSlug = item.slug || item.item_slug || 'unknown';
+
+          const value = `💰 **${Number(avgPrice).toLocaleString()} aUEC** avg\n` +
+                       `📈 ${Number(maxPrice).toLocaleString()} high • 📉 ${Number(minPrice).toLocaleString()} low\n` +
+                       `📊 ${listings} listings • 🏷️ \`${itemSlug}\``;
 
           allAveragesEmbed.addFields([
             {
-              name: `${index + 1}. ${item.name || item.slug}`,
+              name: `${index + 1}. ${itemName}`,
               value: value,
               inline: true
             }
@@ -225,7 +280,7 @@ module.exports = {
         });
 
         allAveragesEmbed
-          .setFooter({ text: `UEX Marketplace • Showing ${sortedData.length} of ${allData.length} items` })
+          .setFooter({ text: `UEX Marketplace • Showing ${sortedData.length} of ${allData.length} items • Copy slugs for specific queries` })
           .setTimestamp();
 
         await interaction.editReply({ embeds: [allAveragesEmbed] });

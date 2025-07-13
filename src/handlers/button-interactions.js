@@ -26,6 +26,10 @@ async function handleButtonInteraction(interaction) {
       await handleHelpButton(interaction);
     } else if (customId === 'help_averages_command') {
       await handleHelpAveragesCommandButton(interaction);
+    } else if (customId === 'marketplace_averages_all') {
+      await handleMarketplaceAveragesAllButton(interaction);
+    } else if (customId === 'marketplace_listings_all') {
+      await handleMarketplaceListingsAllButton(interaction);
     } else {
       logger.warn('Unknown button interaction', { customId });
       await interaction.reply({ 
@@ -824,17 +828,73 @@ async function handleHelpAveragesCommandButton(interaction) {
     });
 
   } catch (error) {
-    logger.error('Help averages command button error', {
+    logger.error('Help averages command button error', { 
       error: error.message,
-      userId: interaction.user.id
+      userId: interaction.user.id 
     });
 
-    try {
-      const errorMessage = '❌ Failed to display averages help.';
-      await interaction.reply({ content: errorMessage, ephemeral: true });
-    } catch (replyError) {
-      logger.error('Failed to send help averages command button error reply', { error: replyError.message });
-    }
+    await interaction.reply({ 
+      content: '❌ An error occurred while showing help information.',
+      ephemeral: true 
+    });
+  }
+}
+
+/**
+ * Handle marketplace averages all button click
+ * @param {object} interaction - Discord button interaction
+ */
+async function handleMarketplaceAveragesAllButton(interaction) {
+  try {
+    logger.info('Marketplace averages all button clicked', { 
+      userId: interaction.user.id,
+      username: interaction.user.username 
+    });
+
+    await interaction.reply({ 
+      content: '📊 Use `/marketplace-averages all` to view all available item slugs with price data.',
+      ephemeral: true 
+    });
+
+  } catch (error) {
+    logger.error('Marketplace averages all button error', { 
+      error: error.message,
+      userId: interaction.user.id 
+    });
+
+    await interaction.reply({ 
+      content: '❌ An error occurred.',
+      ephemeral: true 
+    });
+  }
+}
+
+/**
+ * Handle marketplace listings all button click
+ * @param {object} interaction - Discord button interaction
+ */
+async function handleMarketplaceListingsAllButton(interaction) {
+  try {
+    logger.info('Marketplace listings all button clicked', { 
+      userId: interaction.user.id,
+      username: interaction.user.username 
+    });
+
+    await interaction.reply({ 
+      content: '🏪 Use `/marketplace-listings` to view active marketplace listings and see what items are being traded.',
+      ephemeral: true 
+    });
+
+  } catch (error) {
+    logger.error('Marketplace listings all button error', { 
+      error: error.message,
+      userId: interaction.user.id 
+    });
+
+    await interaction.reply({ 
+      content: '❌ An error occurred.',
+      ephemeral: true 
+    });
   }
 }
 
