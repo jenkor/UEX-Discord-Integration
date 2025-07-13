@@ -104,12 +104,36 @@ Once deployed, share your bot's Discord invite link and the user instructions be
 
 ## 💬 Usage for Users
 
+### Getting Your UEX API Credentials
+
+Before you can use the bot, you need to get your API credentials from UEX Corp:
+
+**🔑 Step 1: Get API Token (Bearer Token)**
+1. Login to [UEX Corp](https://uexcorp.space)
+2. Navigate to **"My Apps"** section
+3. Create a new application or select an existing one
+4. Copy the **"Bearer Token"** from your application
+5. This is your `api_token` for the bot
+
+**🔐 Step 2: Get Secret Key**
+1. Go to **"Account Settings"** in your UEX profile
+2. Find the **"Secret Key"** section
+3. Generate a new key if you don't have one
+4. Copy the secret key (**keep it private!**)
+5. This is your `secret_key` for the bot
+
+**💡 Need Help?**
+- Use `/help` command in Discord for detailed instructions
+- Use `/help topic:credentials` for step-by-step guidance
+- Contact UEX Corp support if you can't find these sections
+
 ### Initial Setup
 
 **1. Register Your UEX Credentials:**
 ```
-/register api_token:your_uex_token secret_key:your_uex_secret
+/register api_token:your_uex_bearer_token secret_key:your_uex_secret_key
 ```
+⚠️ **Important:** Use this command in DMs or private channels only!
 
 **2. Configure UEX Webhooks:**
 - In your UEX Corp account settings
@@ -118,9 +142,17 @@ Once deployed, share your bot's Discord invite link and the user instructions be
 
 ### Commands
 
+**❓ Get Help:**
+```
+/help                    # General help with credential instructions
+/help topic:credentials  # Step-by-step UEX credential guide
+/help topic:commands     # Available bot commands
+/help topic:privacy      # Privacy and security information
+```
+
 **📝 Register/Manage Credentials:**
 ```
-/register api_token:your_token secret_key:your_secret
+/register api_token:your_bearer_token secret_key:your_secret_key
 /unregister
 ```
 
@@ -269,9 +301,10 @@ module.exports = {
 - ✅ Verify your UEX API credentials are still valid
 
 **Registration Issues:**
-- ✅ Use the exact command format: `/register api_token:token secret_key:secret`
-- ✅ Ensure your UEX credentials are correct
+- ✅ Use the exact command format: `/register api_token:bearer_token secret_key:secret`
+- ✅ Ensure your UEX credentials are correct (use `/help topic:credentials` for guidance)
 - ✅ Try re-registering if you updated your UEX credentials
+- ✅ Use `/help` command for detailed credential instructions
 
 ## 🌟 Benefits of This Multi-User Architecture
 

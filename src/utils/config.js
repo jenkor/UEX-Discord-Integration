@@ -92,7 +92,10 @@ function validateConfiguration() {
 function applyDefaults() {
   for (const [key, defaultValue] of Object.entries(optionalVars)) {
     if (!process.env[key]) {
-      process.env[key] = defaultValue.toString();
+      // Only set the environment variable if defaultValue is not null
+      if (defaultValue !== null) {
+        process.env[key] = defaultValue.toString();
+      }
     }
   }
 }

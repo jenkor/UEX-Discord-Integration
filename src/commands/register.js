@@ -11,17 +11,17 @@ const userManager = require('../utils/user-manager');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('register')
-    .setDescription('Register your UEX API credentials (private, encrypted)')
+    .setDescription('Register your UEX API credentials (Bearer Token from My Apps + Secret Key from Settings)')
     .addStringOption(option =>
       option
         .setName('api_token')
-        .setDescription('Your UEX API token')
+        .setDescription('Your UEX Bearer Token from My Apps section')
         .setRequired(true)
     )
     .addStringOption(option =>
       option
         .setName('secret_key')
-        .setDescription('Your UEX secret key')
+        .setDescription('Your UEX Secret Key from Account Settings')
         .setRequired(true)
     ),
 
@@ -54,8 +54,22 @@ module.exports = {
               inline: false
             },
             {
-              name: '🔗 Get Your API Keys',
-              value: 'Contact UEX Corp support to obtain valid API credentials',
+              name: '🔑 How to Get Your UEX API Credentials',
+              value: '**Step 1: Get API Token**\n' +
+                     '• Go to your UEX account dashboard\n' +
+                     '• Navigate to "My Apps" section\n' +
+                     '• Create a new application or select existing one\n' +
+                     '• Copy the "Bearer Token" from your application\n\n' +
+                     '**Step 2: Get Secret Key**\n' +
+                     '• Go to "Account Settings" in your UEX profile\n' +
+                     '• Find the "Secret Key" section\n' +
+                     '• Generate a new key if needed\n' +
+                     '• Copy the secret key (don\'t share with anyone!)',
+              inline: false
+            },
+            {
+              name: '🌐 UEX Platform',
+              value: '[Visit UEX Corp](https://uexcorp.space) to manage your credentials',
               inline: false
             }
           ])
