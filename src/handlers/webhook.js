@@ -40,39 +40,126 @@ async function processUEXWebhook(discordClient, rawBody, signature) {
     const uexData = parseResult.data;
     logger.webhook('UEX webhook data received', uexData);
 
-    // Determine which user should receive the notification
+    // Enhanced bidirectional notification routing using UEX API
     // 
-    // CURRENT LIMITATION: UEX webhooks only provide listing owner's username,
-    // not the buyer's username. This means we can only notify in one direction:
-    // - ✅ Buyer sends message → Notify listing owner
-    // - ❌ Owner replies → Cannot notify buyer (we don't know buyer's UEX username)
-    // 
-    // For full bidirectional notifications, we would need UEX to provide
-    // both participant usernames or a separate "recipient" field.
+    // Strategy:
+    // 1. Get negotiation details from UEX API to find both participants
+    // 2. Determine who sent the message vs who should receive notification
+    // 3. Notify the recipient, not the sender
     
     const senderUsername = uexData.client_username;
-    const ownerUsername = uexData.listing_owner_username;
+    const negotiationHash = uexData.negotiation_hash;
     
-    if (!senderUsername || !ownerUsername) {
-      logger.warn('Missing sender or owner username in webhook data', {
+    if (!senderUsername || !negotiationHash) {
+      logger.warn('Missing sender username or negotiation hash in webhook data', {
         senderUsername,
-        ownerUsername
+        negotiationHash
       });
       return {
         success: false,
-        error: 'Missing client_username or listing_owner_username in webhook data'
+        error: 'Missing client_username or negotiation_hash in webhook data'
       };
     }
 
-    // For now, we always notify the listing owner when they receive a message
-    // This covers the most common case: buyer contacts seller
-    const targetUexUsername = ownerUsername;
+    // We need API credentials to fetch negotiation details
+    // Try to find any registered user's credentials to make the API call
+    const activeUsers = await userManager.getAllActiveUsers();
+    
+    if (activeUsers.length === 0) {
+      logger.warn('No active users found - cannot fetch negotiation details');
+      return {
+        success: true,
+        message: 'Webhook received but no registered users to fetch negotiation details'
+      };
+    }
+
+    // Use the first active user's credentials to fetch negotiation details
+    const firstUser = activeUsers[0];
+    const credentialsResult = await userManager.getUserCredentials(firstUser.userId);
+    
+    if (!credentialsResult.found) {
+      logger.error('Could not get credentials for active user', { userId: firstUser.userId });
+      return {
+        success: false,
+        error: 'Failed to get API credentials for negotiation lookup'
+      };
+    }
+
+    // Fetch negotiation details to get both participant usernames
+    const negotiationResult = await uexAPI.getNegotiationDetails(negotiationHash, credentialsResult.credentials);
+    
+    if (!negotiationResult.success) {
+      logger.warn('Could not fetch negotiation details - falling back to simple routing', {
+        negotiationHash,
+        error: negotiationResult.error
+      });
+      
+      // Fallback to original logic: notify listing owner
+      const targetUexUsername = uexData.listing_owner_username;
+      if (!targetUexUsername) {
+        return {
+          success: false,
+          error: 'Could not determine notification target - missing listing owner and negotiation lookup failed'
+        };
+      }
+      
+      const userResult = await userManager.findUserByUexUsername(targetUexUsername);
+      if (!userResult.found) {
+        return {
+          success: true,
+          message: `Fallback: No registered Discord user found for ${targetUexUsername}`
+        };
+      }
+      
+      const result = await sendNotificationDM(discordClient, userResult.userId, uexData);
+      return {
+        success: result.success,
+        message: `Fallback notification sent to ${userResult.username}`,
+        error: result.error
+      };
+    }
+
+    // Extract participant usernames from negotiation details
+    const negotiation = negotiationResult.negotiation;
+    const advertiserUsername = negotiation.advertiser_username; // Listing owner
+    const clientUsername = negotiation.client_username;         // Buyer
+    
+    logger.info('Negotiation participants identified', {
+      sender: senderUsername,
+      advertiser: advertiserUsername,
+      client: clientUsername,
+      negotiationHash
+    });
+
+    // Determine who should receive the notification (opposite of sender)
+    let targetUexUsername;
+    let notificationReason;
+    
+    if (senderUsername === advertiserUsername) {
+      // Advertiser (seller) sent message → notify client (buyer)
+      targetUexUsername = clientUsername;
+      notificationReason = 'Seller replied to buyer';
+    } else if (senderUsername === clientUsername) {
+      // Client (buyer) sent message → notify advertiser (seller)
+      targetUexUsername = advertiserUsername;
+      notificationReason = 'Buyer contacted seller';
+    } else {
+      // Sender doesn't match either participant (shouldn't happen)
+      logger.warn('Sender does not match negotiation participants', {
+        sender: senderUsername,
+        advertiser: advertiserUsername,
+        client: clientUsername
+      });
+      
+      // Default to notifying advertiser
+      targetUexUsername = advertiserUsername;
+      notificationReason = 'Unknown sender - defaulting to advertiser';
+    }
     
     logger.info('Webhook routing decision', {
       sender: senderUsername,
-      owner: ownerUsername,
       target: targetUexUsername,
-      reason: senderUsername === ownerUsername ? 'Owner self-message' : 'Message to listing owner'
+      reason: notificationReason
     });
 
     // Find the Discord user by their UEX username

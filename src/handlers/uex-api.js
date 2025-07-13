@@ -256,11 +256,77 @@ async function getUserProfile(credentials) {
   }
 }
 
+/**
+ * Get negotiation details from UEX API
+ * @param {string} negotiationHash - The negotiation hash
+ * @param {object} credentials - API credentials {apiToken, secretKey}
+ * @returns {Promise<{success: boolean, negotiation?: object, error?: string}>}
+ */
+async function getNegotiationDetails(negotiationHash, credentials) {
+  try {
+    logger.uex(`Getting negotiation details for hash: ${negotiationHash}`);
+    
+    const response = await fetch(`${config.UEX_API_BASE_URL}/marketplace_negotiations?hash=${negotiationHash}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${credentials.apiToken}`,
+        'secret_key': credentials.secretKey,
+        'User-Agent': 'UEX-Discord-Bot/2.0-MultiUser'
+      }
+    });
+
+    const responseText = await response.text();
+    logger.uex('Negotiation details API response received', { 
+      status: response.status, 
+      statusText: response.statusText,
+      body: responseText 
+    });
+
+    if (response.ok) {
+      try {
+        const jsonResponse = JSON.parse(responseText);
+        
+        if (jsonResponse.status === 'ok' && jsonResponse.data && jsonResponse.data.length > 0) {
+          const negotiation = jsonResponse.data[0]; // Get first negotiation
+          logger.success('Negotiation details retrieved successfully', { 
+            hash: negotiationHash,
+            advertiser: negotiation.advertiser_username,
+            client: negotiation.client_username
+          });
+          return { 
+            success: true, 
+            negotiation: negotiation
+          };
+        } else {
+          throw new Error(`UEX API error: ${jsonResponse.error || 'No negotiation data found'}`);
+        }
+      } catch (parseError) {
+        throw new Error(`Failed to parse UEX API response: ${parseError.message}`);
+      }
+    } else {
+      throw new Error(`HTTP ${response.status}: ${responseText}`);
+    }
+
+  } catch (error) {
+    logger.error('Failed to get negotiation details from UEX API', {
+      negotiationHash,
+      error: error.message,
+      stack: error.stack
+    });
+    
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
 module.exports = {
   sendReply,
   sendReplyWithCredentials,
   testConnection,
   validateWebhookSignature,
   parseWebhookData,
-  getUserProfile
+  getUserProfile,
+  getNegotiationDetails
 }; 
