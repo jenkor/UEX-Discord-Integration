@@ -18,10 +18,12 @@ const userManager = require('../utils/user-manager');
  */
 async function processUEXWebhook(discordClient, rawBody, signature) {
   try {
-    logger.webhook('Processing UEX webhook');
+    const startTime = Date.now();
+    logger.webhook('Processing UEX webhook', { timestamp: new Date().toISOString() });
 
     // Validate webhook signature
     if (!uexAPI.validateWebhookSignature(rawBody, signature)) {
+      logger.error('Webhook signature validation failed');
       return {
         success: false,
         error: 'Invalid webhook signature'
@@ -31,6 +33,7 @@ async function processUEXWebhook(discordClient, rawBody, signature) {
     // Parse webhook data
     const parseResult = uexAPI.parseWebhookData(rawBody);
     if (!parseResult.valid) {
+      logger.error('Webhook data parsing failed', { error: parseResult.error });
       return {
         success: false,
         error: parseResult.error
@@ -38,7 +41,10 @@ async function processUEXWebhook(discordClient, rawBody, signature) {
     }
 
     const uexData = parseResult.data;
-    logger.webhook('UEX webhook data received', uexData);
+    logger.webhook('UEX webhook data received', { 
+      ...uexData,
+      processingTime: Date.now() - startTime
+    });
 
     // Enhanced bidirectional notification routing using UEX API
     // 

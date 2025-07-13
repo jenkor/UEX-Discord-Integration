@@ -112,6 +112,38 @@ openssl rand -hex 16
 2. Enter the name and value
 3. Click **"Save Changes"**
 
+## Step 4.5: Add Persistent Disk Storage (Optional but Recommended)
+
+By default, Render's free tier has **ephemeral storage** - user data is lost when the service restarts. To persist user registrations across restarts and deployments, add a persistent disk:
+
+### 4.5.1 Add Persistent Disk
+1. In your Render service dashboard, go to **"Disks"** in the sidebar
+2. Click **"Add Disk"**
+3. Configure the disk:
+   - **Size**: 1GB (sufficient for hundreds of users)
+   - **Mount Path**: `/var/data`
+   - **Name**: `user-data-storage`
+4. Click **"Add Disk"**
+
+### 4.5.2 Configure Persistent Data Environment Variable
+1. Go to **"Environment"** in your Render dashboard
+2. Add this environment variable:
+
+| Variable Name | Value | Description |
+|---------------|-------|-------------|
+| `PERSISTENT_DATA_DIR` | `/var/data` | Directory where user data will be stored |
+
+### 4.5.3 Cost Information
+- **1GB persistent disk**: $0.25/month
+- **Total cost with Render Starter**: $7 (service) + $0.25 (disk) = $7.25/month
+- **Benefits**: User data persists across all restarts and deployments
+
+### 4.5.4 Without Persistent Disk
+If you don't add persistent disk:
+- User data is stored in ephemeral storage
+- Users must re-register after each restart
+- Free tier works but requires re-registration
+
 ## Step 5: Deploy and Test
 
 ### 5.1 Deploy the Bot
@@ -178,23 +210,40 @@ To receive real-time notifications when negotiations update:
 
 ## Monitoring and Maintenance
 
-### Auto-Sleep Behavior
+### Auto-Sleep Prevention (Keep-Alive)
+The bot now includes a **keep-alive mechanism** that prevents sleeping:
+- **Automatically pings** the health endpoint every 10 minutes
+- **Only runs in deployed environments** (Render, etc.)
+- **Prevents webhook delivery issues** caused by service sleeping
+- **Visible in logs** as "Keep-alive ping successful"
+
+### Auto-Sleep Behavior (Legacy)
 - Service sleeps after 15 minutes of inactivity
 - **Automatically wakes** on:
   - Incoming webhooks
   - Discord commands
   - Health check requests
-- No manual intervention needed
+- **Keep-alive prevents this** from happening
+
+### Webhook Reliability
+Recent improvements for webhook handling:
+- **Faster response times** to prevent UEX timeouts
+- **Asynchronous processing** to handle wake-up delays
+- **Better error logging** for debugging
+- **Service stays awake** with keep-alive mechanism
 
 ### Logs and Debugging
 - View logs in Render dashboard under **"Logs"**
-- Check for connection errors or API issues
+- Look for "Keep-alive ping successful" messages
+- Check webhook processing times in logs
+- Monitor "Webhook received and processing" messages
 - Bot automatically reconnects to Discord if needed
 
 ### Updates
 - Push changes to your GitHub repository
 - Render automatically rebuilds and deploys
 - Zero downtime deployments
+- Keep-alive mechanism persists through updates
 
 ## Troubleshooting
 
@@ -218,6 +267,38 @@ To receive real-time notifications when negotiations update:
 1. Check build logs for npm install errors
 2. Verify `package.json` has correct dependencies
 3. Ensure Node.js version compatibility
+
+### Missing Webhook Notifications
+**If you're not receiving UEX notifications:**
+
+1. **Check if keep-alive is working**:
+   - Look for "Keep-alive ping successful" in logs
+   - Should appear every 10 minutes
+   - If missing, service might be sleeping
+
+2. **Verify webhook configuration**:
+   - Webhook URL: `YOUR_SERVICE_URL/webhook/uex`
+   - Secret matches your `UEX_WEBHOOK_SECRET`
+   - UEX Corp has your correct webhook URL
+
+3. **Check webhook delivery**:
+   - Look for "UEX webhook received" in logs
+   - Check "Webhook received and processing" messages
+   - Monitor processing times (should be under 1000ms)
+
+4. **Test webhook manually**:
+   ```bash
+   curl -X POST YOUR_SERVICE_URL/webhook/uex \
+     -H "Content-Type: application/json" \
+     -d '{"test": "data"}'
+   ```
+
+5. **Force wake-up test**:
+   - Visit: `YOUR_SERVICE_URL/health`
+   - Should return bot status immediately
+   - If slow (>5 seconds), service was sleeping
+
+**Quick Fix**: If notifications are still missing, redeploy the service with the new keep-alive mechanism.
 
 ## Cost Management
 

@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node src/bot.js",
     "dev": "nodemon src/bot.js",
-    "test": "node --test"
+    "test": "node --test",
+    "deploy": "node scripts/deploy.js",
+    "validate": "node scripts/validate-deployment.js"
   },
   "keywords": [
     "uex",

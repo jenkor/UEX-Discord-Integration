@@ -47,25 +47,42 @@ This bot is designed for **one admin to deploy and serve multiple users**:
 4. Enable "Message Content Intent" under Privileged Gateway Intents
 5. Invite the bot to any Discord server (required for DMs to work)
 
-### 2. Deploy the Bot
+### 2. Choose Your Deployment Platform
 
-#### Option A: Render (Recommended - Free 750hrs/month)
-**📖 [Complete Render Deployment Guide →](docs/RENDER-DEPLOYMENT.md)**
+**🤔 Not sure which platform to choose?**  
+**📖 [Complete Deployment Overview →](docs/DEPLOYMENT-OVERVIEW.md)**
 
-Quick steps:
-1. Fork this repository to your GitHub account
-2. Sign up at [Render](https://render.com) using your GitHub account
-3. Create new web service from your forked repository
-4. Set environment variables (see below)
-5. Deploy and start serving users!
+#### Quick Platform Comparison
 
-#### Option B: Other Platforms
-The bot works on any Node.js hosting platform:
-- **Railway**: https://railway.app
-- **Daki Hosting**: https://daki.dev  
-- **Any VPS**: With Node.js 18+ support
+| Platform | Cost | Setup | Auto-Sleep | Best For |
+|----------|------|-------|------------|----------|
+| **GCP Always Free** | $0 forever | Manual | ❌ No | Free permanent hosting |
+| **Render Free** | $0 (750hrs) | Easy | ✅ Yes | Quick testing |
+| **AWS Lightsail** | $3.50/month | Manual | ❌ No | Reliable & cheap |
+| **Render Starter** | $7/month | Easy | ❌ No | Managed hosting |
 
-### 3. Configure Environment Variables
+#### Deployment Guides
+- **📖 [Deployment Overview](docs/DEPLOYMENT-OVERVIEW.md)** - Choose the right platform
+- **📖 [Render Guide](docs/RENDER-DEPLOYMENT.md)** - Easiest setup
+- **📖 [AWS Guide](docs/AWS-DEPLOYMENT.md)** - Cost-effective hosting  
+- **📖 [GCP Guide](docs/GCP-DEPLOYMENT.md)** - Free forever option
+
+### 3. Validate Your Setup
+
+Before deploying, check that everything is configured correctly:
+
+```bash
+npm run validate
+```
+
+This script will:
+- ✅ Check environment variables
+- ✅ Validate Node.js version  
+- ✅ Test network connectivity
+- ✅ Verify project structure
+- 🎯 Recommend the best deployment platform for your needs
+
+### 4. Configure Environment Variables
 
 Set these in your hosting platform's environment variables:
 
@@ -81,7 +98,7 @@ NODE_ENV=production
 
 **🔑 Generate Encryption Key**: Use a random 32+ character string. This encrypts all user credentials.
 
-### 4. Share Instructions with Users
+### 5. Share Instructions with Users
 
 Once deployed, share your bot's Discord invite link and the user instructions below.
 

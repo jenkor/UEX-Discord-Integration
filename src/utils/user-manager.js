@@ -10,11 +10,17 @@ const config = require('./config');
 const logger = require('./logger');
 
 // File path for storing encrypted user data
-const USERS_FILE = path.join(process.cwd(), 'user_data', 'users.json');
+const DATA_DIR = config.PERSISTENT_DATA_DIR || process.cwd();
+const USERS_FILE = path.join(DATA_DIR, 'user_data', 'users.json');
 const ENCRYPTION_KEY = config.USER_ENCRYPTION_KEY;
 
 // Log the file path for debugging
-logger.info('User data file path configured', { filePath: USERS_FILE, cwd: process.cwd() });
+logger.info('User data file path configured', { 
+  filePath: USERS_FILE, 
+  dataDir: DATA_DIR,
+  persistentStorage: !!config.PERSISTENT_DATA_DIR,
+  cwd: process.cwd()
+});
 
 /**
  * Ensure data directory exists

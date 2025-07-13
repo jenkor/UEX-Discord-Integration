@@ -106,6 +106,9 @@ client.once('ready', async () => {
   // Multi-user bot is ready - no test DM sent since there's no specific user ID
   logger.info('Multi-user bot ready - users can register with /register command');
   
+  // Start keep-alive mechanism to prevent service from sleeping
+  startKeepAlive();
+  
   logger.success('🚀 UEX Discord Bot is ready for deployment!');
 });
 
@@ -180,22 +183,33 @@ client.on('warn', warning => {
 });
 
 // Express routes
+// Health check endpoint
 app.get('/health', (req, res) => {
-  const health = {
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    bot: {
-      ready: client.readyAt ? true : false,
-      username: client.user?.username || 'Not ready',
-      id: client.user?.id || 'Not ready'
-    },
-    uptime: process.uptime(),
-    memory: process.memoryUsage(),
-    version: '2.0.0'
-  };
-  
-  res.json(health);
-  logger.info('Health check requested', { ready: client.readyAt ? true : false });
+  try {
+    const healthInfo = config.getHealthInfo();
+    const isDiscordReady = client.isReady();
+    
+    res.json({
+      ...healthInfo,
+      discord: {
+        ready: isDiscordReady,
+        user: isDiscordReady ? client.user.tag : 'Not connected',
+        guilds: isDiscordReady ? client.guilds.cache.size : 0
+      },
+      server: {
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+        version: process.version
+      }
+    });
+  } catch (error) {
+    logger.error('Health check failed', { error: error.message });
+    res.status(500).json({ 
+      status: 'error', 
+      message: error.message,
+      platform: config.isManagedPlatform() ? 'managed' : 'self-hosted'
+    });
+  }
 });
 
 app.post('/webhook/uex', async (req, res) => {
@@ -205,14 +219,20 @@ app.post('/webhook/uex', async (req, res) => {
     
     logger.webhook('UEX webhook received');
     
-    const result = await webhookHandler.processUEXWebhook(client, rawBody, signature);
+    // Respond quickly to prevent timeouts while processing
+    res.status(200).json({ success: true, message: 'Webhook received and processing' });
     
-    if (result.success) {
-      res.json({ success: true, message: 'Notification sent via DM' });
-    } else {
-      logger.error('Webhook processing failed', { error: result.error });
-      res.status(400).json({ success: false, error: result.error });
-    }
+    // Process webhook asynchronously to prevent timeouts
+    setImmediate(async () => {
+      const result = await webhookHandler.processUEXWebhook(client, rawBody, signature);
+      
+      if (result.success) {
+        logger.success('Webhook processed successfully', { message: result.message });
+      } else {
+        logger.error('Webhook processing failed', { error: result.error });
+      }
+    });
+    
   } catch (error) {
     logger.error('Webhook endpoint error', { error: error.message });
     res.status(500).json({ success: false, error: 'Internal server error' });
@@ -294,6 +314,36 @@ async function startBot() {
   } catch (error) {
     logger.error('Failed to start bot', { error: error.message, stack: error.stack });
     process.exit(1);
+  }
+}
+
+/**
+ * Keep-alive mechanism to prevent service from sleeping on free hosting platforms
+ * Pings the health endpoint every 10 minutes
+ */
+function startKeepAlive() {
+  // Only run keep-alive if we have a service URL (deployed environment)
+  if (process.env.RENDER_EXTERNAL_URL || process.env.RENDER_SERVICE_URL) {
+    const keepAliveInterval = 10 * 60 * 1000; // 10 minutes in milliseconds
+    
+    setInterval(async () => {
+      try {
+        const serviceUrl = process.env.RENDER_EXTERNAL_URL || process.env.RENDER_SERVICE_URL;
+        const response = await fetch(`${serviceUrl}/health`);
+        
+        if (response.ok) {
+          logger.info('Keep-alive ping successful');
+        } else {
+          logger.warn('Keep-alive ping failed', { status: response.status });
+        }
+      } catch (error) {
+        logger.warn('Keep-alive ping error', { error: error.message });
+      }
+    }, keepAliveInterval);
+    
+    logger.info('Keep-alive mechanism started - service will stay awake');
+  } else {
+    logger.info('Keep-alive disabled - not in deployed environment');
   }
 }
 
