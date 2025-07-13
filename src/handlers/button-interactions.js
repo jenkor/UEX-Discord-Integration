@@ -24,12 +24,14 @@ async function handleButtonInteraction(interaction) {
       await handleHelpReplyCommandButton(interaction);
     } else if (customId.startsWith('help_')) {
       await handleHelpButton(interaction);
-    } else if (customId === 'help_averages_command') {
-      await handleHelpAveragesCommandButton(interaction);
-    } else if (customId === 'marketplace_averages_all') {
-      await handleMarketplaceAveragesAllButton(interaction);
     } else if (customId === 'marketplace_listings_all') {
       await handleMarketplaceListingsAllButton(interaction);
+    } else if (customId.startsWith('listings_page_')) {
+      await handleListingsPaginationButton(interaction);
+    } else if (customId.startsWith('refresh_listings_')) {
+      await handleRefreshListingsButton(interaction);
+    } else if (customId === 'clear_filters_listings') {
+      await handleClearFiltersButton(interaction);
     } else {
       logger.warn('Unknown button interaction', { customId });
       await interaction.reply({ 
@@ -782,92 +784,7 @@ async function handleHelpReplyCommandButton(interaction) {
   }
 }
 
-/**
- * Handle help averages command button click
- * @param {object} interaction - Discord button interaction
- */
-async function handleHelpAveragesCommandButton(interaction) {
-  try {
-    logger.info('Help averages command button clicked', { 
-      userId: interaction.user.id,
-      username: interaction.user.username 
-    });
 
-    const helpEmbed = new EmbedBuilder()
-      .setTitle('📊 How to Use Marketplace Averages')
-      .setDescription('View price averages and market trends for specific items.')
-      .setColor(0x0099ff)
-      .addFields([
-        {
-          name: '🔍 For Specific Items',
-          value: '```\n/marketplace-averages item slug:ITEM_SLUG\n```\n**Example:** `/marketplace-averages item slug:titanium`',
-          inline: false
-        },
-        {
-          name: '📊 For All Items',
-          value: '```\n/marketplace-averages all\n```\nShows price averages for all available items.',
-          inline: false
-        },
-        {
-          name: '💡 Finding Item Slugs',
-          value: '• Check marketplace listings for item types\n• Common slugs: `titanium`, `steel`, `hadanite`, `quantanium`\n• View marketplace listings to see what items are being traded\n• Item slugs are usually lowercase names without spaces',
-          inline: false
-        },
-        {
-          name: '📈 What You\'ll See',
-          value: '• **Average Price** - Current market average\n• **Highest/Lowest** - Price range\n• **Trading Volume** - How often it\'s traded\n• **Market Trends** - Price movement over time',
-          inline: false
-        }
-      ])
-      .setFooter({ text: 'UEX Marketplace • Use item slugs from marketplace listings' })
-      .setTimestamp();
-
-    await interaction.reply({ 
-      embeds: [helpEmbed], 
-      ephemeral: true 
-    });
-
-  } catch (error) {
-    logger.error('Help averages command button error', { 
-      error: error.message,
-      userId: interaction.user.id 
-    });
-
-    await interaction.reply({ 
-      content: '❌ An error occurred while showing help information.',
-      ephemeral: true 
-    });
-  }
-}
-
-/**
- * Handle marketplace averages all button click
- * @param {object} interaction - Discord button interaction
- */
-async function handleMarketplaceAveragesAllButton(interaction) {
-  try {
-    logger.info('Marketplace averages all button clicked', { 
-      userId: interaction.user.id,
-      username: interaction.user.username 
-    });
-
-    await interaction.reply({ 
-      content: '📊 Use `/marketplace-averages all` to view all available item slugs with price data.',
-      ephemeral: true 
-    });
-
-  } catch (error) {
-    logger.error('Marketplace averages all button error', { 
-      error: error.message,
-      userId: interaction.user.id 
-    });
-
-    await interaction.reply({ 
-      content: '❌ An error occurred.',
-      ephemeral: true 
-    });
-  }
-}
 
 /**
  * Handle marketplace listings all button click
@@ -894,6 +811,180 @@ async function handleMarketplaceListingsAllButton(interaction) {
     await interaction.reply({ 
       content: '❌ An error occurred.',
       ephemeral: true 
+    });
+  }
+}
+
+/**
+ * Handle listings pagination button click
+ * @param {object} interaction - Discord button interaction
+ */
+async function handleListingsPaginationButton(interaction) {
+  try {
+    logger.info('Listings pagination button clicked', { 
+      customId: interaction.customId,
+      userId: interaction.user.id,
+      username: interaction.user.username 
+    });
+
+    // Parse the custom ID: listings_page_{pageNumber}_{encodedFilters}
+    const parts = interaction.customId.split('_');
+    const pageNumber = parseInt(parts[2]);
+    const encodedFilters = parts[3] || '';
+
+    // Decode filters
+    let filters = {};
+    try {
+      filters = JSON.parse(Buffer.from(encodedFilters, 'base64').toString());
+    } catch (error) {
+      logger.warn('Failed to decode filters', { encodedFilters, error: error.message });
+    }
+
+    // Build the command string to simulate command execution
+    let commandParams = [`page:${pageNumber}`];
+    if (filters.username) commandParams.push(`username:${filters.username}`);
+    if (filters.operation) commandParams.push(`operation:${filters.operation}`);
+    if (filters.type) commandParams.push(`item_type:${filters.type}`);
+
+    await interaction.deferUpdate();
+
+    // Import the marketplace listings command and execute it
+    const marketplaceListingsCommand = require('../commands/marketplace-listings');
+    
+    // Create a mock interaction with the new page number
+    const mockInteraction = {
+      ...interaction,
+      options: {
+        getString: (name) => {
+          switch (name) {
+            case 'username': return filters.username || null;
+            case 'operation': return filters.operation || null;
+            case 'item_type': return filters.type || null;
+            default: return null;
+          }
+        },
+        getInteger: (name) => {
+          if (name === 'page') return pageNumber;
+          return null;
+        }
+      },
+      editReply: interaction.editReply.bind(interaction),
+      deferReply: () => Promise.resolve() // Already deferred
+    };
+
+    await marketplaceListingsCommand.execute(mockInteraction);
+
+  } catch (error) {
+    logger.error('Listings pagination button error', { 
+      error: error.message,
+      customId: interaction.customId,
+      userId: interaction.user.id 
+    });
+
+    await interaction.editReply({ 
+      content: '❌ An error occurred while changing pages.',
+      components: [] 
+    });
+  }
+}
+
+/**
+ * Handle refresh listings button click
+ * @param {object} interaction - Discord button interaction
+ */
+async function handleRefreshListingsButton(interaction) {
+  try {
+    logger.info('Refresh listings button clicked', { 
+      customId: interaction.customId,
+      userId: interaction.user.id,
+      username: interaction.user.username 
+    });
+
+    // Parse the encoded filters from custom ID
+    const encodedFilters = interaction.customId.split('refresh_listings_')[1] || '';
+    
+    let filters = {};
+    try {
+      filters = JSON.parse(Buffer.from(encodedFilters, 'base64').toString());
+    } catch (error) {
+      logger.warn('Failed to decode filters for refresh', { encodedFilters, error: error.message });
+    }
+
+    await interaction.deferUpdate();
+
+    // Import and execute marketplace listings command
+    const marketplaceListingsCommand = require('../commands/marketplace-listings');
+    
+    const mockInteraction = {
+      ...interaction,
+      options: {
+        getString: (name) => {
+          switch (name) {
+            case 'username': return filters.username || null;
+            case 'operation': return filters.operation || null;
+            case 'item_type': return filters.type || null;
+            default: return null;
+          }
+        },
+        getInteger: (name) => {
+          if (name === 'page') return 1; // Reset to page 1 on refresh
+          return null;
+        }
+      },
+      editReply: interaction.editReply.bind(interaction),
+      deferReply: () => Promise.resolve()
+    };
+
+    await marketplaceListingsCommand.execute(mockInteraction);
+
+  } catch (error) {
+    logger.error('Refresh listings button error', { 
+      error: error.message,
+      userId: interaction.user.id 
+    });
+
+    await interaction.editReply({ 
+      content: '❌ An error occurred while refreshing listings.'
+    });
+  }
+}
+
+/**
+ * Handle clear filters button click
+ * @param {object} interaction - Discord button interaction
+ */
+async function handleClearFiltersButton(interaction) {
+  try {
+    logger.info('Clear filters button clicked', { 
+      userId: interaction.user.id,
+      username: interaction.user.username 
+    });
+
+    await interaction.deferUpdate();
+
+    // Execute marketplace listings command with no filters
+    const marketplaceListingsCommand = require('../commands/marketplace-listings');
+    
+    const mockInteraction = {
+      ...interaction,
+      options: {
+        getString: () => null,
+        getInteger: () => null
+      },
+      editReply: interaction.editReply.bind(interaction),
+      deferReply: () => Promise.resolve()
+    };
+
+    await marketplaceListingsCommand.execute(mockInteraction);
+
+  } catch (error) {
+    logger.error('Clear filters button error', { 
+      error: error.message,
+      userId: interaction.user.id 
+    });
+
+    await interaction.editReply({ 
+      content: '❌ An error occurred while clearing filters.'
     });
   }
 }
