@@ -90,9 +90,17 @@ module.exports = {
                 inline: false
               },
               {
+                name: '🏪 Marketplace Commands',
+                value: '• `/marketplace-listings` - View active marketplace listings\n' +
+                       '• `/marketplace-add` - Create new marketplace listings\n' +
+                       '• `/marketplace-averages` - View price averages for items\n' +
+                       '• `/negotiations` - View your marketplace negotiations',
+                inline: false
+              },
+              {
                 name: '💬 Trading Commands',
                 value: '• `/reply` - Reply to UEX negotiations\n' +
-                       '• More commands coming soon...',
+                       '• Interactive buttons for quick responses',
                 inline: false
               },
               {

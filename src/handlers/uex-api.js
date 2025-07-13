@@ -321,6 +321,202 @@ async function getNegotiationDetails(negotiationHash, credentials) {
   }
 }
 
+/**
+ * Get marketplace listings
+ * @param {object} filters - Optional filters {id, slug, username}
+ * @returns {Promise<{success: boolean, data?: array, error?: string}>}
+ */
+async function getMarketplaceListings(filters = {}) {
+  try {
+    logger.uex('Fetching marketplace listings', { filters });
+    
+    const queryParams = new URLSearchParams();
+    if (filters.id) queryParams.append('id', filters.id);
+    if (filters.slug) queryParams.append('slug', filters.slug);
+    if (filters.username) queryParams.append('username', filters.username);
+    
+    const url = `${config.UEX_API_BASE_URL}/marketplace_listings/${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'UEX-Discord-Bot/2.0-MultiUser'
+      }
+    });
+
+    const responseData = await response.json();
+    logger.uex('Marketplace listings response', { 
+      status: response.status, 
+      count: responseData.data?.length || 0 
+    });
+
+    if (response.ok) {
+      return { success: true, data: responseData.data || [] };
+    } else {
+      return { success: false, error: responseData.message || 'Failed to fetch marketplace listings' };
+    }
+
+  } catch (error) {
+    logger.error('Error fetching marketplace listings', { error: error.message });
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Create a new marketplace listing
+ * @param {object} listingData - Listing data (category, operation, type, etc.)
+ * @param {object} credentials - API credentials {apiToken, secretKey}
+ * @returns {Promise<{success: boolean, listingId?: string, error?: string}>}
+ */
+async function createMarketplaceListing(listingData, credentials) {
+  try {
+    logger.uex('Creating marketplace listing', { 
+      category: listingData.id_category,
+      operation: listingData.operation,
+      type: listingData.type 
+    });
+    
+    const response = await fetch(`${config.UEX_API_BASE_URL}/marketplace_advertise/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${credentials.apiToken}`,
+        'secret_key': credentials.secretKey,
+        'User-Agent': 'UEX-Discord-Bot/2.0-MultiUser'
+      },
+      body: JSON.stringify({
+        ...listingData,
+        is_production: 1
+      })
+    });
+
+    const responseData = await response.json();
+    logger.uex('Marketplace listing creation response', { 
+      status: response.status, 
+      success: response.ok 
+    });
+
+    if (response.ok) {
+      return { success: true, listingId: responseData.id };
+    } else {
+      return { success: false, error: responseData.message || 'Failed to create marketplace listing' };
+    }
+
+  } catch (error) {
+    logger.error('Error creating marketplace listing', { error: error.message });
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get marketplace averages for specific item
+ * @param {string} itemSlug - Item slug to get averages for
+ * @param {object} credentials - API credentials {apiToken, secretKey}
+ * @returns {Promise<{success: boolean, data?: object, error?: string}>}
+ */
+async function getMarketplaceAverages(itemSlug, credentials) {
+  try {
+    logger.uex('Fetching marketplace averages', { itemSlug });
+    
+    const response = await fetch(`${config.UEX_API_BASE_URL}/marketplace_averages/?slug=${itemSlug}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${credentials.apiToken}`,
+        'secret_key': credentials.secretKey,
+        'User-Agent': 'UEX-Discord-Bot/2.0-MultiUser'
+      }
+    });
+
+    const responseData = await response.json();
+    logger.uex('Marketplace averages response', { 
+      status: response.status, 
+      itemSlug 
+    });
+
+    if (response.ok) {
+      return { success: true, data: responseData.data };
+    } else {
+      return { success: false, error: responseData.message || 'Failed to fetch marketplace averages' };
+    }
+
+  } catch (error) {
+    logger.error('Error fetching marketplace averages', { error: error.message });
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get all marketplace averages
+ * @param {object} credentials - API credentials {apiToken, secretKey}
+ * @returns {Promise<{success: boolean, data?: array, error?: string}>}
+ */
+async function getMarketplaceAveragesAll(credentials) {
+  try {
+    logger.uex('Fetching all marketplace averages');
+    
+    const response = await fetch(`${config.UEX_API_BASE_URL}/marketplace_averages_all/`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${credentials.apiToken}`,
+        'secret_key': credentials.secretKey,
+        'User-Agent': 'UEX-Discord-Bot/2.0-MultiUser'
+      }
+    });
+
+    const responseData = await response.json();
+    logger.uex('All marketplace averages response', { 
+      status: response.status, 
+      count: responseData.data?.length || 0 
+    });
+
+    if (response.ok) {
+      return { success: true, data: responseData.data || [] };
+    } else {
+      return { success: false, error: responseData.message || 'Failed to fetch all marketplace averages' };
+    }
+
+  } catch (error) {
+    logger.error('Error fetching all marketplace averages', { error: error.message });
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get user's marketplace negotiations
+ * @param {object} credentials - API credentials {apiToken, secretKey}
+ * @returns {Promise<{success: boolean, data?: array, error?: string}>}
+ */
+async function getMarketplaceNegotiations(credentials) {
+  try {
+    logger.uex('Fetching marketplace negotiations');
+    
+    const response = await fetch(`${config.UEX_API_BASE_URL}/marketplace_negotiations/`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${credentials.apiToken}`,
+        'secret_key': credentials.secretKey,
+        'User-Agent': 'UEX-Discord-Bot/2.0-MultiUser'
+      }
+    });
+
+    const responseData = await response.json();
+    logger.uex('Marketplace negotiations response', { 
+      status: response.status, 
+      count: responseData.data?.length || 0 
+    });
+
+    if (response.ok) {
+      return { success: true, data: responseData.data || [] };
+    } else {
+      return { success: false, error: responseData.message || 'Failed to fetch marketplace negotiations' };
+    }
+
+  } catch (error) {
+    logger.error('Error fetching marketplace negotiations', { error: error.message });
+    return { success: false, error: error.message };
+  }
+}
+
 module.exports = {
   sendReply,
   sendReplyWithCredentials,
@@ -328,5 +524,10 @@ module.exports = {
   validateWebhookSignature,
   parseWebhookData,
   getUserProfile,
-  getNegotiationDetails
+  getNegotiationDetails,
+  getMarketplaceListings,
+  createMarketplaceListing,
+  getMarketplaceAverages,
+  getMarketplaceAveragesAll,
+  getMarketplaceNegotiations
 }; 

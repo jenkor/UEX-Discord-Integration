@@ -20,6 +20,10 @@ async function handleButtonInteraction(interaction) {
       await handleReplyButton(interaction);
     } else if (customId === 'help_credentials') {
       await handleHelpCredentialsButton(interaction);
+    } else if (customId === 'view_negotiations') {
+      await handleViewNegotiationsButton(interaction);
+    } else if (customId === 'help_reply_command') {
+      await handleHelpReplyCommandButton(interaction);
     } else {
       logger.warn('Unknown button interaction', { customId });
       await interaction.reply({ 
@@ -396,6 +400,121 @@ async function handleHelpCredentialsButton(interaction) {
       }
     } catch (replyError) {
       logger.error('Failed to send help button error reply', { error: replyError.message });
+    }
+  }
+}
+
+/**
+ * Handle view negotiations button click
+ * @param {object} interaction - Discord button interaction
+ */
+async function handleViewNegotiationsButton(interaction) {
+  try {
+    logger.info('View negotiations button clicked', { 
+      userId: interaction.user.id,
+      username: interaction.user.username 
+    });
+
+    const helpEmbed = new EmbedBuilder()
+      .setTitle('💬 How to View Your Negotiations')
+      .setDescription('Use the `/negotiations` command to see all your marketplace negotiations.')
+      .setColor(0x0099ff)
+      .addFields([
+        {
+          name: '📋 Command Usage',
+          value: '```\n/negotiations\n```\nThis will show all your active and completed marketplace negotiations.',
+          inline: false
+        },
+        {
+          name: '📊 What You\'ll See',
+          value: '• **Active negotiations** - Currently ongoing discussions\n• **Completed negotiations** - Finished deals\n• **Negotiation details** - Item, price, and parties involved\n• **Hashes** - For use with `/reply` command',
+          inline: false
+        },
+        {
+          name: '💬 Replying to Negotiations',
+          value: 'Copy the hash from your negotiations and use:\n```\n/reply hash:HASH_HERE message:Your response\n```',
+          inline: false
+        }
+      ])
+      .setFooter({ text: 'UEX Marketplace • Stay on top of your deals' })
+      .setTimestamp();
+
+    await interaction.reply({ 
+      embeds: [helpEmbed], 
+      ephemeral: true 
+    });
+
+  } catch (error) {
+    logger.error('View negotiations button error', {
+      error: error.message,
+      userId: interaction.user.id
+    });
+
+    try {
+      const errorMessage = '❌ Failed to display negotiations help.';
+      await interaction.reply({ content: errorMessage, ephemeral: true });
+    } catch (replyError) {
+      logger.error('Failed to send view negotiations button error reply', { error: replyError.message });
+    }
+  }
+}
+
+/**
+ * Handle help reply command button click
+ * @param {object} interaction - Discord button interaction
+ */
+async function handleHelpReplyCommandButton(interaction) {
+  try {
+    logger.info('Help reply command button clicked', { 
+      userId: interaction.user.id,
+      username: interaction.user.username 
+    });
+
+    const helpEmbed = new EmbedBuilder()
+      .setTitle('💬 How to Reply to Negotiations via Discord')
+      .setDescription('You can reply to UEX marketplace negotiations directly through Discord!')
+      .setColor(0x00ff88)
+      .addFields([
+        {
+          name: '📋 Step 1: Get the Negotiation Hash',
+          value: '• Use `/negotiations` to see your active negotiations\n• Copy the hash from the negotiation you want to reply to\n• Example hash: `abc123def456`',
+          inline: false
+        },
+        {
+          name: '💬 Step 2: Send Your Reply',
+          value: '```\n/reply hash:abc123def456 message:Thanks for your offer!\n```\n• Replace `abc123def456` with the actual hash\n• Write your message in the `message` field',
+          inline: false
+        },
+        {
+          name: '🔔 Step 3: Get Notified',
+          value: '• You\'ll receive Discord DMs when others reply\n• Click "Reply" buttons in notifications for quick responses\n• All replies are sent directly to UEX Corp',
+          inline: false
+        },
+        {
+          name: '✨ Pro Tips',
+          value: '• Use private channels or DMs for `/register` and `/reply` commands\n• Notifications include "Reply" buttons for convenience\n• Your replies appear on UEX Corp marketplace instantly',
+          inline: false
+        }
+      ])
+      .setFooter({ text: 'UEX Discord Bot • Streamlined marketplace communication' })
+      .setTimestamp();
+
+    await interaction.reply({ 
+      embeds: [helpEmbed], 
+      ephemeral: true 
+    });
+
+  } catch (error) {
+    logger.error('Help reply command button error', {
+      error: error.message,
+      userId: interaction.user.id
+    });
+
+    try {
+      const errorMessage = '❌ Failed to display reply help.';
+      await interaction.reply({ content: errorMessage, ephemeral: true });
+    } catch (replyError) {
+      logger.error('Failed to send help reply command button error reply', { error: replyError.message });
     }
   }
 }
