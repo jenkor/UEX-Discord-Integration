@@ -49,20 +49,17 @@ This bot is designed for **one admin to deploy and serve multiple users**:
 
 ### 2. Deploy the Bot
 
-#### Option A: Wispbyte (Recommended - Free)
-**📖 [Complete Wispbyte Deployment Guide →](docs/WISPBYTE-DEPLOYMENT.md)**
+#### Option A: Render (Recommended - Free 750hrs/month)
+**📖 [Complete Render Deployment Guide →](docs/RENDER-DEPLOYMENT.md)**
 
 Quick steps:
 1. Fork this repository to your GitHub account
-2. Sign up at [Wispbyte](https://wispbyte.com) 
-3. Import your forked GitHub repository
+2. Sign up at [Render](https://render.com) using your GitHub account
+3. Create new web service from your forked repository
 4. Set environment variables (see below)
 5. Deploy and start serving users!
 
-#### Option B: Render (Free 750hrs/month)
-**📖 [Complete Render Deployment Guide →](docs/RENDER-DEPLOYMENT.md)**
-
-#### Option C: Other Platforms
+#### Option B: Other Platforms
 The bot works on any Node.js hosting platform:
 - **Railway**: https://railway.app
 - **Daki Hosting**: https://daki.dev  
@@ -196,7 +193,6 @@ src/
     └── user-manager.js        # User credential encryption/storage
 
 docs/                          # Deployment guides
-├── WISPBYTE-DEPLOYMENT.md     # Wispbyte hosting guide
 └── RENDER-DEPLOYMENT.md       # Render hosting guide
 
 scripts/
