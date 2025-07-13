@@ -517,6 +517,39 @@ async function getMarketplaceNegotiations(credentials) {
   }
 }
 
+/**
+ * Get available items from UEX API
+ * @returns {Promise<{success: boolean, data?: array, error?: string}>}
+ */
+async function getItems() {
+  try {
+    logger.uex('Fetching items list');
+    
+    const response = await fetch(`${config.UEX_API_BASE_URL}/items/`, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'UEX-Discord-Bot/2.0-MultiUser'
+      }
+    });
+
+    const responseData = await response.json();
+    logger.uex('Items response', { 
+      status: response.status, 
+      count: responseData.data?.length || 0 
+    });
+
+    if (response.ok) {
+      return { success: true, data: responseData.data || [] };
+    } else {
+      return { success: false, error: responseData.message || 'Failed to fetch items' };
+    }
+
+  } catch (error) {
+    logger.error('Error fetching items', { error: error.message });
+    return { success: false, error: error.message };
+  }
+}
+
 module.exports = {
   sendReply,
   sendReplyWithCredentials,
@@ -529,5 +562,6 @@ module.exports = {
   createMarketplaceListing,
   getMarketplaceAverages,
   getMarketplaceAveragesAll,
-  getMarketplaceNegotiations
+  getMarketplaceNegotiations,
+  getItems
 }; 

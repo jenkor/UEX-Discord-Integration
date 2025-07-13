@@ -124,12 +124,17 @@ module.exports = {
             .setColor(0x666666)
             .addFields([
               {
-                name: '🔍 Tips',
-                value: '• Check the item slug spelling\n• Try using `/marketplace-averages all` to see available items\n• Some items may not have enough trading data',
+                name: '🔍 Need Help Finding Items?',
+                value: '• Use `/items search` to find item names and slugs\n• Use `/marketplace-averages all` to see all available averages\n• Popular items: `titanium`, `steel`, `hadanite`, `quantanium`',
+                inline: false
+              },
+              {
+                name: '💡 Tips',
+                value: '• Check the item slug spelling (use lowercase)\n• Some items may not have enough trading data\n• Try searching the UEX marketplace website',
                 inline: false
               }
             ])
-            .setFooter({ text: 'UEX Marketplace' })
+            .setFooter({ text: 'UEX Marketplace • Use /items search to discover item slugs' })
             .setTimestamp();
 
           await interaction.editReply({ embeds: [noDataEmbed] });

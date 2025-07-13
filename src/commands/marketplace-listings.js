@@ -103,14 +103,22 @@ module.exports = {
 
       // Add listings as fields
       displayListings.forEach((listing, index) => {
-        const value = `**${listing.operation?.toUpperCase() || 'N/A'}** • ${listing.type || 'Unknown'}\n` +
-                     `💰 **${Number(listing.price || 0).toLocaleString()} aUEC** per ${listing.unit || 'unit'}\n` +
-                     `📍 ${listing.location || 'Unknown Location'}\n` +
-                     `👤 ${listing.username || 'Unknown User'}`;
+        const operationType = listing.operation?.toUpperCase() || 'UNKNOWN';
+        const operationEmoji = operationType === 'WTS' ? '💰' : operationType === 'WTB' ? '🛒' : '🔄';
+        
+        const priceInfo = listing.price ? `${Number(listing.price).toLocaleString()} aUEC` : 'Price not listed';
+        const unitInfo = listing.unit ? ` per ${listing.unit}` : '';
+        
+        const value = `${operationEmoji} **${operationType}** • ${listing.type || 'Unknown Item'}\n` +
+                     `💵 **${priceInfo}**${unitInfo}\n` +
+                     `📍 **Location:** ${listing.location || 'Not specified'}\n` +
+                     `👤 **Seller:** ${listing.username || 'Unknown'}\n` +
+                     `📊 **Stock:** ${listing.quantity || 'Not specified'}\n` +
+                     `⏰ **Updated:** ${listing.updated ? new Date(listing.updated).toLocaleDateString() : 'Unknown'}`;
 
         listingsEmbed.addFields([
           {
-            name: `${index + 1}. ${listing.title || 'Untitled Listing'}`,
+            name: `${index + 1}. ${listing.title || listing.type || 'Untitled Listing'}`,
             value: value,
             inline: true
           }

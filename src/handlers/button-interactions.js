@@ -18,12 +18,14 @@ async function handleButtonInteraction(interaction) {
     
     if (customId.startsWith('reply_')) {
       await handleReplyButton(interaction);
-    } else if (customId.startsWith('help_')) {
-      await handleHelpButton(interaction);
     } else if (customId === 'view_negotiations') {
       await handleViewNegotiationsButton(interaction);
     } else if (customId === 'help_reply_command') {
       await handleHelpReplyCommandButton(interaction);
+    } else if (customId.startsWith('help_')) {
+      await handleHelpButton(interaction);
+    } else if (customId === 'help_averages_command') {
+      await handleHelpAveragesCommandButton(interaction);
     } else {
       logger.warn('Unknown button interaction', { customId });
       await interaction.reply({ 
@@ -772,6 +774,66 @@ async function handleHelpReplyCommandButton(interaction) {
       await interaction.reply({ content: errorMessage, ephemeral: true });
     } catch (replyError) {
       logger.error('Failed to send help reply command button error reply', { error: replyError.message });
+    }
+  }
+}
+
+/**
+ * Handle help averages command button click
+ * @param {object} interaction - Discord button interaction
+ */
+async function handleHelpAveragesCommandButton(interaction) {
+  try {
+    logger.info('Help averages command button clicked', { 
+      userId: interaction.user.id,
+      username: interaction.user.username 
+    });
+
+    const helpEmbed = new EmbedBuilder()
+      .setTitle('📊 How to Use Marketplace Averages')
+      .setDescription('View price averages and market trends for specific items using the slugs you discovered.')
+      .setColor(0x0099ff)
+      .addFields([
+        {
+          name: '🔍 For Specific Items',
+          value: '```\n/marketplace-averages item slug:ITEM_SLUG\n```\n**Example:** `/marketplace-averages item slug:titanium`',
+          inline: false
+        },
+        {
+          name: '📊 For All Items',
+          value: '```\n/marketplace-averages all\n```\nShows price averages for all available items.',
+          inline: false
+        },
+        {
+          name: '💡 Finding Item Slugs',
+          value: '• Use `/items search query:metal` to find metal items\n• Use `/items popular` to see commonly traded items\n• Copy the slug from the item results\n• Popular slugs: `titanium`, `steel`, `hadanite`, `quantanium`',
+          inline: false
+        },
+        {
+          name: '📈 What You\'ll See',
+          value: '• **Average Price** - Current market average\n• **Highest/Lowest** - Price range\n• **Trading Volume** - How often it\'s traded\n• **Market Trends** - Price movement over time',
+          inline: false
+        }
+      ])
+      .setFooter({ text: 'UEX Marketplace • Use discovered item slugs in averages commands' })
+      .setTimestamp();
+
+    await interaction.reply({ 
+      embeds: [helpEmbed], 
+      ephemeral: true 
+    });
+
+  } catch (error) {
+    logger.error('Help averages command button error', {
+      error: error.message,
+      userId: interaction.user.id
+    });
+
+    try {
+      const errorMessage = '❌ Failed to display averages help.';
+      await interaction.reply({ content: errorMessage, ephemeral: true });
+    } catch (replyError) {
+      logger.error('Failed to send help averages command button error reply', { error: replyError.message });
     }
   }
 }
