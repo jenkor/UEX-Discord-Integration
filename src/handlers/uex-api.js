@@ -373,7 +373,11 @@ async function createMarketplaceListing(listingData, credentials) {
     logger.uex('Creating marketplace listing', { 
       category: listingData.id_category,
       operation: listingData.operation,
-      type: listingData.type 
+      type: listingData.type,
+      title: listingData.title,
+      price: listingData.price,
+      unit: listingData.unit,
+      is_production: listingData.is_production
     });
     
     const response = await fetch(`${config.UEX_API_BASE_URL}/marketplace_advertise/`, {
@@ -384,27 +388,92 @@ async function createMarketplaceListing(listingData, credentials) {
         'secret_key': credentials.secretKey,
         'User-Agent': 'UEX-Discord-Bot/2.0-MultiUser'
       },
-      body: JSON.stringify({
-        ...listingData,
-        is_production: 1
-      })
+      body: JSON.stringify(listingData)
     });
 
-    const responseData = await response.json();
+    let responseData;
+    const responseText = await response.text();
+    
+    try {
+      responseData = JSON.parse(responseText);
+    } catch (parseError) {
+      logger.error('Failed to parse marketplace advertise response', { 
+        responseText, 
+        parseError: parseError.message 
+      });
+      return { success: false, error: 'Invalid response format from UEX API' };
+    }
+
     logger.uex('Marketplace listing creation response', { 
       status: response.status, 
-      success: response.ok 
+      success: response.ok,
+      responseData: responseData
     });
 
     if (response.ok) {
-      return { success: true, listingId: responseData.id };
+      // Check for specific success response
+      if (responseData === 'ok' || (typeof responseData === 'object' && responseData.status === 'ok')) {
+        return { 
+          success: true, 
+          data: {
+            id_listing: responseData.id_listing,
+            url: responseData.url,
+            date_expiration: responseData.date_expiration
+          }
+        };
+      } else {
+        return { success: false, error: 'Unexpected success response format' };
+      }
     } else {
-      return { success: false, error: responseData.message || 'Failed to create marketplace listing' };
+      // Handle specific error responses according to API documentation
+      const errorMessages = {
+        'service_unavailable': 'UEX service is currently unavailable',
+        'missing_secret_key': 'Secret key is missing from request',
+        'invalid_secret_key': 'Invalid secret key provided',
+        'missing_operation': 'Operation type is required (sell/buy)',
+        'invalid_operation': 'Invalid operation type (must be sell or buy)',
+        'missing_type': 'Listing type is required (item/service)',
+        'invalid_type': 'Invalid listing type (must be item or service)',
+        'missing_id_category': 'Category ID is required',
+        'missing_unit': 'Unit type is required',
+        'invalid_unit': 'Invalid unit type for the selected listing type',
+        'missing_title': 'Title is required',
+        'missing_description': 'Description is required',
+        'image_data_exceeds_limit': 'Image size exceeds 10MB limit',
+        'missing_currency': 'Currency is required',
+        'invalid_currency': 'Invalid currency (must be UEC)',
+        'missing_language': 'Language is required',
+        'invalid_language': 'Invalid language (must be en_US)',
+        'category_not_found': 'The specified category does not exist',
+        'item_not_found': 'The specified item was not found',
+        'user_not_found': 'User account not found',
+        'user_not_allowed': 'User is not allowed to create listings',
+        'user_not_verified': 'User account is not verified',
+        'user_active_listings_limit_reached': 'Maximum number of active listings reached',
+        'image_upload_error': 'Failed to upload image',
+        'image_storage_error': 'Failed to store image on server'
+      };
+
+      const errorKey = typeof responseData === 'string' ? responseData : responseData?.error || responseData?.message;
+      const userFriendlyError = errorMessages[errorKey] || errorKey || `HTTP ${response.status}: ${response.statusText}`;
+      
+      return { 
+        success: false, 
+        error: userFriendlyError,
+        statusCode: response.status,
+        errorCode: errorKey
+      };
     }
 
   } catch (error) {
-    logger.error('Error creating marketplace listing', { error: error.message });
-    return { success: false, error: error.message };
+    logger.error('Error creating marketplace listing', { 
+      error: error.message, 
+      stack: error.stack 
+    });
+    return { 
+      success: false, 
+      error: `Network error: ${error.message}` 
+    };
   }
 }
 

@@ -1,12 +1,22 @@
 # AWS Deployment Guide
 
-Deploy the UEX Discord Bot on Amazon Web Services using EC2, Lightsail, or other AWS services. This guide covers both EC2 instances and AWS Lightsail for easy deployment.
+Deploy the **UEX Multi-User Discord Bot** with comprehensive marketplace functionality on Amazon Web Services. This guide covers AWS Lightsail (recommended) and EC2 deployment options.
+
+## 🎯 What You'll Deploy
+
+A comprehensive Discord bot that provides:
+- **🛒 Full UEX Marketplace Integration** - Create, browse, and manage listings
+- **💰 Advanced Trading Tools** - Filters, pagination, rich market data  
+- **💬 Negotiation Management** - View and reply to negotiations
+- **🔔 Real-time Notifications** - Marketplace and negotiation updates
+- **👥 Multi-User Support** - Serves unlimited users securely
+- **🔒 Bank-Level Security** - AES-256 encrypted credential storage
 
 ## 🚀 Quick Start: AWS Lightsail (Recommended)
 
-**AWS Lightsail** is the easiest and most cost-effective way to deploy on AWS.
+**AWS Lightsail** is the easiest and most cost-effective way to deploy on AWS with predictable pricing.
 
-### Cost: $3.50/month (IPv6) or $5/month (IPv4)
+### 💰 Cost: $3.50/month (IPv6) or $5/month (IPv4)
 
 ### 1. Create Lightsail Instance
 
@@ -98,6 +108,66 @@ pm2 startup
 2. **Attach Static IP** to your instance
 3. **Configure DNS** to point to your static IP
 4. **Your webhook URL**: `http://your-domain.com:3000/webhook/uex`
+
+## 🧪 Testing Your Deployment
+
+### 1. **Health Check**
+Test if your bot is running:
+```bash
+curl http://your-static-ip:3000/health
+# Should return: {"status":"healthy","platform":"AWS","commands":8,"uptime":"..."}
+```
+
+### 2. **Discord Command Testing**
+1. Go to your Discord server where the bot is invited
+2. Type `/` to see available commands:
+   - `/help` - Comprehensive help system
+   - `/admin info` - Bot configuration (admin only)
+   - `/marketplace-add` - Create marketplace listings
+   - `/marketplace-listings` - Browse marketplace
+   - `/negotiations` - View negotiations
+   - `/register` - User registration
+   - `/reply` - Reply to negotiations
+   - `/unregister` - Remove credentials
+
+### 3. **Basic Functionality Tests**
+```bash
+/help                    # Should show comprehensive help
+/admin info             # Should show bot configuration
+/marketplace-listings   # Should show "Please register first" message
+```
+
+### 4. **Full Testing (after registration)**
+```bash
+/register api_token:your_token secret_key:your_secret
+/marketplace-listings   # Should show marketplace listings with filters
+/marketplace-add       # Should show listing creation form
+/negotiations          # Should show your negotiations
+```
+
+### 5. **Webhook Testing**
+Configure your UEX Corp webhook URL to:
+```
+http://your-static-ip:3000/webhook/uex
+```
+
+Test webhook reception:
+```bash
+# Check PM2 logs for webhook messages
+pm2 logs uex-discord-bot
+```
+
+### 6. **Performance Monitoring**
+```bash
+# Check bot status
+pm2 status
+
+# Monitor resource usage
+pm2 monit
+
+# View recent logs
+pm2 logs uex-discord-bot --lines 50
+```
 
 ---
 

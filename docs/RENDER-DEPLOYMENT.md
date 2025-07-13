@@ -1,21 +1,32 @@
-# Deploying UEX Discord Bot to Render
+# Deploying UEX Multi-User Discord Bot to Render
 
-This guide will walk you through deploying your UEX Discord Bot to **Render** - a free hosting platform that's perfect for Discord bots with automatic wake-up on incoming requests.
+This guide will walk you through deploying your **UEX Multi-User Discord Bot** with full marketplace functionality to **Render** - a free hosting platform perfect for Discord bots.
+
+## 🎯 What You'll Deploy
+
+A comprehensive Discord bot that provides:
+- **🛒 Full UEX Marketplace Integration** - Create, browse, and manage listings
+- **💰 Advanced Trading Tools** - Filters, pagination, rich market data
+- **💬 Negotiation Management** - View and reply to negotiations
+- **🔔 Real-time Notifications** - Marketplace and negotiation updates
+- **👥 Multi-User Support** - Serves unlimited users securely
+- **🔒 Bank-Level Security** - AES-256 encrypted credential storage
 
 ## Why Render?
 
 - **750 hours/month free** (25+ days of 24/7 uptime)
-- **Auto-wakes on HTTP requests** (webhooks, health checks)
+- **Auto-wakes on HTTP requests** (webhooks, health checks, marketplace activity)
 - **Zero configuration deployment** from GitHub
 - **Professional features** (HTTPS, logging, monitoring)
 - **Easy environment variable management**
+- **Perfect for marketplace bots** - handles traffic spikes well
 
 ## Prerequisites
 
 Before starting, ensure you have:
 - A GitHub account
-- A Discord account
-- Access to UEX Corp API credentials
+- A Discord account with developer access
+- UEX Corp account with API access (for testing)
 
 ## Step 1: Create Your Discord Bot
 
@@ -43,14 +54,14 @@ Before starting, ensure you have:
 ## Step 2: Fork the Repository
 
 ### 2.1 Fork on GitHub
-1. Go to [UEX Discord Bot Repository](https://github.com/jenkor/UEX-Discord-Integration)
+1. Go to [UEX Trading Bot Repository](https://github.com/your-username/UEX_trading)
 2. Click **"Fork"** in the top-right corner
 3. Choose your GitHub account as the destination
 
 ### 2.2 Note Your Repository URL
 Your forked repository will be at:
 ```
-https://github.com/YOUR_GITHUB_USERNAME/UEX-Discord-Integration
+https://github.com/YOUR_GITHUB_USERNAME/UEX_trading
 ```
 
 ## Step 3: Deploy to Render
@@ -160,8 +171,30 @@ Once deployed, you should see:
 
 ### 5.3 Test Bot Commands
 1. Go to your Discord server
-2. Type `/` and you should see your bot's commands
-3. Try `/admin info` to verify the bot is working
+2. Type `/` and you should see your bot's commands:
+   - `/help` - Comprehensive help system
+   - `/admin info` - Bot configuration (admin only)
+   - `/marketplace-add` - Create marketplace listings
+   - `/marketplace-listings` - Browse marketplace
+   - `/negotiations` - View negotiations
+   - `/register` - User registration
+   - `/reply` - Reply to negotiations
+   - `/unregister` - Remove credentials
+
+3. **Basic Tests:**
+   ```
+   /help                    # Should show help system
+   /admin info             # Should show bot configuration
+   /marketplace-listings   # Should show "Please register first" message
+   ```
+
+4. **Full Testing (after user registration):**
+   ```
+   /register api_token:your_token secret_key:your_secret
+   /marketplace-listings   # Should show marketplace listings
+   /marketplace-add       # Should open listing creation form
+   /negotiations          # Should show your negotiations
+   ```
 
 ## Step 6: User Registration
 

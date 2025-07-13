@@ -1,10 +1,20 @@
 # Google Cloud Platform (GCP) Deployment Guide
 
-Deploy the UEX Discord Bot on Google Cloud Platform using the Always Free tier or paid services. This guide covers Compute Engine, Cloud Run, and App Engine deployment options.
+Deploy the **UEX Multi-User Discord Bot** with comprehensive marketplace functionality on Google Cloud Platform using the Always Free tier or paid services.
+
+## 🎯 What You'll Deploy
+
+A comprehensive Discord bot that provides:
+- **🛒 Full UEX Marketplace Integration** - Create, browse, and manage listings
+- **💰 Advanced Trading Tools** - Filters, pagination, rich market data
+- **💬 Negotiation Management** - View and reply to negotiations  
+- **🔔 Real-time Notifications** - Marketplace and negotiation updates
+- **👥 Multi-User Support** - Serves unlimited users securely
+- **🔒 Bank-Level Security** - AES-256 encrypted credential storage
 
 ## 🆓 Free Forever: GCP Always Free Tier (Recommended)
 
-**GCP's Always Free tier is perfect for your Discord bot** - no time limits, no auto-sleep!
+**GCP's Always Free tier is perfect for your marketplace Discord bot** - no time limits, no auto-sleep, handles trading activity well!
 
 ### Cost: $0/month (Forever)
 
@@ -143,13 +153,60 @@ gcloud compute firewall-rules create allow-bot-port \
    - Go to VPC Network → Firewall
    - Create rule: Allow TCP 3000 from 0.0.0.0/0
 
-### 7. Get External IP and Test
+### 7. Testing Your Deployment
 
+#### **Health Check**
 1. **Find your external IP** in VM instances page
-2. **Test health endpoint**: `http://YOUR_EXTERNAL_IP:3000/health`
-3. **Your webhook URL**: `http://YOUR_EXTERNAL_IP:3000/webhook/uex`
+2. **Test health endpoint**: 
+```bash
+curl http://YOUR_EXTERNAL_IP:3000/health
+# Should return: {"status":"healthy","platform":"GCP","commands":8,"uptime":"..."}
+```
 
-**🎉 Your bot is now running on GCP's Free tier forever!**
+#### **Discord Command Testing**
+1. Go to your Discord server where the bot is invited
+2. Type `/` to see available commands:
+   - `/help` - Comprehensive help system
+   - `/admin info` - Bot configuration (admin only)
+   - `/marketplace-add` - Create marketplace listings
+   - `/marketplace-listings` - Browse marketplace
+   - `/negotiations` - View negotiations
+   - `/register` - User registration
+   - `/reply` - Reply to negotiations
+   - `/unregister` - Remove credentials
+
+#### **Basic Functionality Tests**
+```bash
+/help                    # Should show comprehensive help
+/admin info             # Should show bot configuration
+/marketplace-listings   # Should show "Please register first" message
+```
+
+#### **Full Testing (after registration)**
+```bash
+/register api_token:your_token secret_key:your_secret
+/marketplace-listings   # Should show marketplace listings with filters
+/marketplace-add       # Should show listing creation form
+/negotiations          # Should show your negotiations
+```
+
+#### **Webhook Configuration**
+3. **Your webhook URL**: `http://YOUR_EXTERNAL_IP:3000/webhook/uex`
+4. **Configure in UEX Corp** settings to receive real-time notifications
+
+#### **Performance Monitoring**
+```bash
+# Check bot status
+pm2 status
+
+# Monitor resource usage  
+pm2 monit
+
+# View logs
+pm2 logs uex-discord-bot --lines 50
+```
+
+**🎉 Your marketplace Discord bot is now running on GCP's Free tier forever!**
 
 ---
 

@@ -1,7 +1,7 @@
 {
   "name": "uex-discord-bot",
   "version": "2.0.0",
-  "description": "Personal Discord bot for UEX Corp marketplace notifications via DMs",
+  "description": "Multi-user Discord bot for UEX Corp marketplace trading, negotiations, and notifications",
   "main": "src/bot.js",
   "scripts": {
     "start": "node src/bot.js",

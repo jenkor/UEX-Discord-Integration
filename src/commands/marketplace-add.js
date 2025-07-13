@@ -1,6 +1,6 @@
 /**
  * Marketplace Add Command
- * Create new marketplace listings on UEX Corp
+ * Create new marketplace listings on UEX Corp using the official API specification
  */
 
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
@@ -15,7 +15,7 @@ module.exports = {
     .addStringOption(option =>
       option
         .setName('title')
-        .setDescription('Listing title (e.g., "Premium Titanium Ore")')
+        .setDescription('Listing title (alphanumeric and dashes only, max 140 chars)')
         .setRequired(true)
     )
     .addStringOption(option =>
@@ -24,8 +24,8 @@ module.exports = {
         .setDescription('Operation type')
         .setRequired(true)
         .addChoices(
-          { name: 'Buy', value: 'buy' },
-          { name: 'Sell', value: 'sell' }
+          { name: 'Sell', value: 'sell' },
+          { name: 'Buy', value: 'buy' }
         )
     )
     .addStringOption(option =>
@@ -34,8 +34,8 @@ module.exports = {
         .setDescription('Listing type')
         .setRequired(true)
         .addChoices(
-          { name: 'Market', value: 'market' },
-          { name: 'Limit', value: 'limit' }
+          { name: 'Item (helmets, armor sets, etc.)', value: 'item' },
+          { name: 'Service (escort, hauler, miner, etc.)', value: 'service' }
         )
     )
     .addIntegerOption(option =>
@@ -44,63 +44,77 @@ module.exports = {
         .setDescription('Item category ID (1=Materials, 2=Commodities, 3=Equipment, etc.)')
         .setRequired(true)
     )
-    .addNumberOption(option =>
-      option
-        .setName('price')
-        .setDescription('Price per unit in aUEC')
-        .setRequired(true)
-        .setMinValue(0.01)
-    )
     .addIntegerOption(option =>
       option
-        .setName('quantity')
-        .setDescription('Quantity available')
+        .setName('price')
+        .setDescription('Price per unit in UEC')
         .setRequired(true)
         .setMinValue(1)
     )
     .addStringOption(option =>
       option
-        .setName('unit')
-        .setDescription('Unit type (e.g., SCU, kg, cSCU, units)')
-        .setRequired(true)
+        .setName('item_unit')
+        .setDescription('Unit type for ITEMS (use only if type=item)')
+        .setRequired(false)
         .addChoices(
-          { name: 'SCU', value: 'SCU' },
-          { name: 'cSCU', value: 'cSCU' },
-          { name: 'kg', value: 'kg' },
-          { name: 'units', value: 'units' },
-          { name: 'liters', value: 'liters' }
+          { name: 'Box', value: 'box' },
+          { name: 'Crate', value: 'crate' },
+          { name: 'cSCU', value: 'cscu' },
+          { name: 'Dozen', value: 'dozen' },
+          { name: 'Hundred', value: 'hundred' },
+          { name: 'Pack', value: 'pack' },
+          { name: 'Pair', value: 'pair' },
+          { name: 'SCU', value: 'scu' },
+          { name: 'Set', value: 'set' },
+          { name: 'Stack', value: 'stack' },
+          { name: 'Thousand', value: 'thousand' },
+          { name: 'Unit', value: 'unit' }
         )
     )
     .addStringOption(option =>
       option
-        .setName('location')
-        .setDescription('Location (e.g., "Stanton > ArcCorp > Area18")')
-        .setRequired(true)
+        .setName('service_unit')
+        .setDescription('Unit type for SERVICES (use only if type=service)')
+        .setRequired(false)
+        .addChoices(
+          { name: 'Contract', value: 'contract' },
+          { name: 'Cycle', value: 'cycle' },
+          { name: 'Day', value: 'day' },
+          { name: 'Event', value: 'event' },
+          { name: 'Expedition', value: 'expedition' },
+          { name: 'GM', value: 'gm' },
+          { name: 'Hour', value: 'hour' },
+          { name: 'Minute', value: 'minute' },
+          { name: 'Mission', value: 'mission' },
+          { name: 'Month', value: 'month' },
+          { name: 'Operation', value: 'operation' },
+          { name: 'Route', value: 'route' },
+          { name: 'Run', value: 'run' },
+          { name: 'Service', value: 'service' }
+        )
     )
     .addStringOption(option =>
       option
         .setName('description')
-        .setDescription('Detailed description of your listing')
-        .setRequired(false)
+        .setDescription('Detailed description of your listing (max 65535 chars)')
+        .setRequired(true)
     )
     .addStringOption(option =>
       option
-        .setName('contact')
-        .setDescription('Contact information (Discord, in-game name, etc.)')
+        .setName('location')
+        .setDescription('Location (e.g., "Port Tressler", "New Babbage") - Optional')
         .setRequired(false)
-    )
-    .addIntegerOption(option =>
-      option
-        .setName('duration')
-        .setDescription('Listing duration in days (default: 7)')
-        .setRequired(false)
-        .setMinValue(1)
-        .setMaxValue(30)
     )
     .addStringOption(option =>
       option
         .setName('image_url')
-        .setDescription('Image URL for your listing (optional)')
+        .setDescription('Image URL for your listing (JPG or PNG) - Optional')
+        .setRequired(false)
+    )
+    .addBooleanOption(option =>
+      option
+        .setName('is_production')
+        .setDescription('Create production listing (true) or test listing (false)')
         .setRequired(false)
     ),
 
@@ -113,14 +127,84 @@ module.exports = {
       const operation = interaction.options.getString('operation');
       const type = interaction.options.getString('type');
       const category = interaction.options.getInteger('category');
-      const price = interaction.options.getNumber('price');
-      const quantity = interaction.options.getInteger('quantity');
-      const unit = interaction.options.getString('unit');
-      const location = interaction.options.getString('location');
-      const description = interaction.options.getString('description') || '';
-      const contact = interaction.options.getString('contact') || '';
-      const duration = interaction.options.getInteger('duration') || 7;
+      const price = interaction.options.getInteger('price');
+      const itemUnit = interaction.options.getString('item_unit');
+      const serviceUnit = interaction.options.getString('service_unit');
+      const description = interaction.options.getString('description');
+      const location = interaction.options.getString('location') || '';
       const imageUrl = interaction.options.getString('image_url') || '';
+      const isProduction = interaction.options.getBoolean('is_production') ?? true; // Default to production
+
+      // Determine the unit based on type
+      let unit;
+      if (type === 'item') {
+        if (!itemUnit) {
+          const validationEmbed = new EmbedBuilder()
+            .setTitle('❌ Missing Item Unit')
+            .setDescription('You must specify an item unit when creating item listings.')
+            .setColor(0xff0000)
+            .addFields([
+              {
+                name: '📦 Available Item Units',
+                value: 'box, crate, cscu, dozen, hundred, pack, pair, scu, set, stack, thousand, unit',
+                inline: false
+              }
+            ])
+            .setFooter({ text: 'Please select an item unit and try again' })
+            .setTimestamp();
+
+          await interaction.reply({ embeds: [validationEmbed], ephemeral: true });
+          return;
+        }
+        unit = itemUnit;
+      } else if (type === 'service') {
+        if (!serviceUnit) {
+          const validationEmbed = new EmbedBuilder()
+            .setTitle('❌ Missing Service Unit')
+            .setDescription('You must specify a service unit when creating service listings.')
+            .setColor(0xff0000)
+            .addFields([
+              {
+                name: '🛠️ Available Service Units',
+                value: 'contract, cycle, day, event, expedition, gm, hour, minute, mission, month, operation, route, run, service',
+                inline: false
+              }
+            ])
+            .setFooter({ text: 'Please select a service unit and try again' })
+            .setTimestamp();
+
+          await interaction.reply({ embeds: [validationEmbed], ephemeral: true });
+          return;
+        }
+        unit = serviceUnit;
+      }
+
+      // Validate title format (alphanumeric and dashes only)
+      if (!/^[a-zA-Z0-9\s\-]+$/.test(title)) {
+        const validationEmbed = new EmbedBuilder()
+          .setTitle('❌ Invalid Title Format')
+          .setDescription('Title must contain only alphanumeric characters and dashes.')
+          .setColor(0xff0000)
+          .addFields([
+            {
+              name: '✅ Valid Examples',
+              value: '• "Premium Titanium Ore"\n• "High-Quality Ship Parts"\n• "Escort-Service-Alpha"',
+              inline: false
+            },
+            {
+              name: '❌ Invalid Characters',
+              value: 'Special characters like @, #, $, %, &, *, (, ), etc. are not allowed',
+              inline: false
+            }
+          ])
+          .setFooter({ text: 'UEX Marketplace API Requirements' })
+          .setTimestamp();
+
+        await interaction.reply({ embeds: [validationEmbed], ephemeral: true });
+        return;
+      }
+
+
 
       logger.command('Marketplace add command used', {
         userId,
@@ -130,7 +214,8 @@ module.exports = {
         type,
         category,
         price,
-        quantity,
+        unit,
+        isProduction,
         hasImage: !!imageUrl
       });
 
@@ -176,25 +261,74 @@ module.exports = {
         return;
       }
 
-      // Prepare listing data according to UEX API requirements
+      // Prepare image data if URL provided
+      let imageData = null;
+      if (imageUrl) {
+        try {
+          // Download and convert image to base64
+          const response = await fetch(imageUrl);
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+          
+          const buffer = await response.arrayBuffer();
+          const base64 = Buffer.from(buffer).toString('base64');
+          imageData = base64;
+          
+          // Check file size (10MB limit)
+          if (base64.length > 10485760) {
+            throw new Error('Image too large (max 10MB)');
+          }
+        } catch (error) {
+          const imageErrorEmbed = new EmbedBuilder()
+            .setTitle('⚠️ Image Processing Error')
+            .setDescription('Failed to process the provided image URL.')
+            .setColor(0xffa500)
+            .addFields([
+              {
+                name: '❌ Error Details',
+                value: `${error.message}`,
+                inline: false
+              },
+              {
+                name: '📝 Image Requirements',
+                value: '• Must be JPG or PNG format\n• Maximum size: 10MB\n• Must be accessible via direct URL\n• HTTPS URLs recommended',
+                inline: false
+              },
+              {
+                name: '💡 What to Do',
+                value: 'Your listing will be created **without an image**. You can try again with a different image URL.',
+                inline: false
+              }
+            ])
+            .setFooter({ text: 'Continuing without image...' })
+            .setTimestamp();
+
+          await interaction.editReply({ embeds: [imageErrorEmbed] });
+          
+          // Wait 3 seconds then continue without image
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
+      }
+
+      // Prepare listing data according to UEX API specification
       const listingData = {
         id_category: category,
         operation: operation,
+        language: 'en_US',
         type: type,
         unit: unit,
         price: price,
-        quantity: quantity,
+        currency: 'UEC',
+        location: location,
         title: title,
         description: description,
-        location: location,
-        contact_info: contact,
-        duration_days: duration,
-        status: 'active'
+        is_production: isProduction ? 1 : 0
       };
 
-      // Add image URL if provided
-      if (imageUrl) {
-        listingData.image_url = imageUrl;
+      // Add image data if processed successfully
+      if (imageData) {
+        listingData.image_data = imageData;
       }
 
       // Create the marketplace listing
@@ -213,11 +347,20 @@ module.exports = {
             },
             {
               name: '🔍 Common Issues',
-              value: '• Check category ID (1=Materials, 2=Commodities, 3=Equipment)\n• Verify price is greater than 0\n• Ensure all required fields are filled\n• Try different location format',
+              value: '• **Category ID**: Make sure it exists (1=Materials, 2=Commodities, 3=Equipment)\n' +
+                     '• **Title Format**: Only alphanumeric characters and dashes allowed\n' +
+                     '• **Price**: Must be a positive integer\n' +
+                     '• **Unit Type**: Must match your item/service type\n' +
+                     '• **API Credentials**: May need to refresh your registration',
+              inline: false
+            },
+            {
+              name: '🛠️ Next Steps',
+              value: '• Double-check all parameters\n• Try with a different category ID\n• Re-register if credential issues persist\n• Contact support if problem continues',
               inline: false
             }
           ])
-          .setFooter({ text: 'UEX Marketplace • Try again with different parameters' })
+          .setFooter({ text: 'UEX Marketplace API Error • Try again with adjusted parameters' })
           .setTimestamp();
 
         await interaction.editReply({ embeds: [errorEmbed] });
@@ -227,7 +370,9 @@ module.exports = {
       // Success! Show listing details with website-style design
       const operationEmoji = operation === 'sell' ? '💰' : '🛒';
       const operationText = operation === 'sell' ? 'WTS (Want to Sell)' : 'WTB (Want to Buy)';
+      const typeEmoji = type === 'item' ? '📦' : '🛠️';
       const statusEmoji = '🟢';
+      const productionBadge = isProduction ? '🌍 Production' : '🧪 Test';
       
       const successEmbed = new EmbedBuilder()
         .setTitle(`✅ ${operationText} Listing Created!`)
@@ -238,55 +383,57 @@ module.exports = {
       successEmbed.addFields([
         {
           name: `${operationEmoji} ${title}`,
-          value: `**${Number(price).toLocaleString()} aUEC** per ${unit} | **${quantity.toLocaleString()}** ${unit} ${operation === 'sell' ? 'available' : 'needed'}\n` +
-                 `📍 **${location}** | ${statusEmoji} **Active**\n` +
-                 `🏷️ **${getCategoryName(category)}** • **${type.toUpperCase()}** listing`,
+          value: `**${Number(price).toLocaleString()} UEC** per ${unit} | ${typeEmoji} **${type.toUpperCase()}**\n` +
+                 `📍 **${location || 'Location not specified'}** | ${statusEmoji} **Active** | ${productionBadge}\n` +
+                 `🏷️ **${getCategoryName(category)}** • Unit: **${unit}**`,
           inline: false
         }
       ]);
 
-      // Add description if provided
-      if (description) {
-        successEmbed.addFields([
-          {
-            name: '📝 Description',
-            value: description.length > 200 ? description.substring(0, 200) + '...' : description,
-            inline: false
-          }
-        ]);
-      }
-
-      // Add contact and duration info in compact format
+      // Add description
       successEmbed.addFields([
         {
-          name: '📞 Contact Info',
-          value: contact || `Discord: ${interaction.user.username}`,
-          inline: true
-        },
-        {
-          name: '⏰ Duration',
-          value: `${duration} day${duration !== 1 ? 's' : ''}`,
-          inline: true
-        },
-        {
-          name: '📊 Total Value',
-          value: `**${(price * quantity).toLocaleString()} aUEC**`,
-          inline: true
+          name: '📝 Description',
+          value: description.length > 300 ? description.substring(0, 300) + '...' : description,
+          inline: false
         }
       ]);
 
-      // Add listing ID if available
-      if (result.listingId) {
-        successEmbed.addFields([
-          {
+      // Add API response details if available
+      if (result.data) {
+        const responseFields = [];
+        
+        if (result.data.id_listing) {
+          responseFields.push({
             name: '🆔 Listing ID',
-            value: `\`${result.listingId}\` • Use this ID to manage your listing`,
-            inline: false
-          }
-        ]);
+            value: `\`${result.data.id_listing}\``,
+            inline: true
+          });
+        }
+        
+        if (result.data.url) {
+          responseFields.push({
+            name: '🌐 Direct URL',
+            value: `[View Listing](${result.data.url})`,
+            inline: true
+          });
+        }
+        
+        if (result.data.date_expiration) {
+          const expirationDate = new Date(result.data.date_expiration * 1000);
+          responseFields.push({
+            name: '⏰ Expires',
+            value: expirationDate.toLocaleDateString(),
+            inline: true
+          });
+        }
+        
+        if (responseFields.length > 0) {
+          successEmbed.addFields(responseFields);
+        }
       }
 
-      // Add listing management tips and tracking information
+      // Add listing management tips
       successEmbed.addFields([
         {
           name: '📈 Track Your Listing Performance',
@@ -306,33 +453,20 @@ module.exports = {
         }
       ]);
 
-      // Add expected engagement metrics
-      const estimatedViews = Math.ceil(price * quantity / 50000); // Rough estimate based on value
-      successEmbed.addFields([
-        {
-          name: '🎯 What to Expect',
-          value: `• **Estimated daily views:** ~${Math.max(5, estimatedViews)} people\n` +
-                 `• **Listing expires:** ${new Date(Date.now() + duration * 24 * 60 * 60 * 1000).toLocaleDateString()}\n` +
-                 `• **Current market:** ${operation === 'sell' ? 'Sellers' : 'Buyers'} market for this category\n` +
-                 `• **Visibility:** Your listing is now searchable by item type`,
-          inline: false
-        }
-      ]);
-
       // Set image prominently like the website
       if (imageUrl) {
         successEmbed.setImage(imageUrl);
         successEmbed.addFields([
           {
-            name: '🖼️ Image Preview',
-            value: 'Your listing image is displayed above',
+            name: '🖼️ Image Attached',
+            value: 'Your listing image is displayed above and will appear on the UEX marketplace',
             inline: false
           }
         ]);
       }
 
       successEmbed
-        .setFooter({ text: 'UEX Marketplace • Your listing is now visible to all traders!' })
+        .setFooter({ text: `UEX Marketplace • ${productionBadge} • Your listing is now visible to all traders!` })
         .setTimestamp();
 
       // Add action buttons
@@ -341,7 +475,7 @@ module.exports = {
           new ButtonBuilder()
             .setLabel('🌐 View on UEX Marketplace')
             .setStyle(ButtonStyle.Link)
-            .setURL('https://uexcorp.space/marketplace'),
+            .setURL(result.data?.url || 'https://uexcorp.space/marketplace'),
           new ButtonBuilder()
             .setLabel('💬 View My Negotiations')
             .setStyle(ButtonStyle.Secondary)
@@ -370,9 +504,14 @@ module.exports = {
             name: '🔧 What to Try',
             value: '• Check your internet connection\n• Verify your UEX credentials are still valid\n• Try the command again in a few minutes\n• Contact support if the issue persists',
             inline: false
+          },
+          {
+            name: '⚠️ Error Details',
+            value: `\`${error.message}\``,
+            inline: false
           }
         ])
-        .setFooter({ text: 'UEX Marketplace' })
+        .setFooter({ text: 'UEX Marketplace Error Handler' })
         .setTimestamp();
 
       try {
