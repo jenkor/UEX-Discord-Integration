@@ -3,7 +3,7 @@
  * Handles Discord button interactions for UEX bot functionality
  */
 
-const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, EmbedBuilder } = require('discord.js');
+const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const uexAPI = require('./uex-api');
 const userManager = require('../utils/user-manager');
 const logger = require('../utils/logger');
@@ -18,6 +18,8 @@ async function handleButtonInteraction(interaction) {
     
     if (customId.startsWith('reply_')) {
       await handleReplyButton(interaction);
+    } else if (customId === 'help_credentials') {
+      await handleHelpCredentialsButton(interaction);
     } else {
       logger.warn('Unknown button interaction', { customId });
       await interaction.reply({ 
@@ -75,12 +77,30 @@ async function handleReplyButton(interaction) {
             name: '📝 How to Register',
             value: 'Use `/register` command with your UEX API credentials',
             inline: false
+          },
+          {
+            name: '🔑 Get API Keys',
+            value: 'Get Bearer Token from UEX **My Apps** + Secret Key from **Account Settings**',
+            inline: false
           }
         ])
         .setFooter({ text: 'UEX Discord Bot' })
         .setTimestamp();
 
-      await interaction.reply({ embeds: [notRegisteredEmbed], ephemeral: true });
+      const helpButton = new ActionRowBuilder()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId('help_credentials')
+            .setLabel('📖 Get Help')
+            .setStyle(ButtonStyle.Primary)
+            .setEmoji('🔑')
+        );
+
+      await interaction.reply({ 
+        embeds: [notRegisteredEmbed], 
+        components: [helpButton], 
+        ephemeral: true 
+      });
       return;
     }
 
@@ -183,10 +203,34 @@ async function handleReplyModalSubmit(interaction) {
         .setTitle('❌ Not Registered')
         .setDescription('Your UEX credentials are no longer available.')
         .setColor(0xff0000)
+        .addFields([
+          {
+            name: '📝 How to Register',
+            value: 'Use `/register` command with your UEX API credentials',
+            inline: false
+          },
+          {
+            name: '🔑 Get API Keys',
+            value: 'Get Bearer Token from UEX **My Apps** + Secret Key from **Account Settings**',
+            inline: false
+          }
+        ])
         .setFooter({ text: 'UEX Discord Bot' })
         .setTimestamp();
 
-      await interaction.editReply({ embeds: [errorEmbed] });
+      const helpButton = new ActionRowBuilder()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId('help_credentials')
+            .setLabel('📖 Get Help')
+            .setStyle(ButtonStyle.Primary)
+            .setEmoji('🔑')
+        );
+
+      await interaction.editReply({ 
+        embeds: [errorEmbed], 
+        components: [helpButton] 
+      });
       return;
     }
 
@@ -277,6 +321,81 @@ async function handleReplyModalSubmit(interaction) {
       await interaction.editReply({ embeds: [errorEmbed] });
     } catch (replyError) {
       logger.error('Failed to send reply error message', { error: replyError.message });
+    }
+  }
+}
+
+/**
+ * Handle help credentials button click
+ * @param {object} interaction - Discord button interaction
+ */
+async function handleHelpCredentialsButton(interaction) {
+  try {
+    logger.info('Help credentials button clicked', { 
+      userId: interaction.user.id,
+      username: interaction.user.username 
+    });
+
+    const helpEmbed = new EmbedBuilder()
+      .setTitle('🔑 How to Get Your UEX API Credentials')
+      .setDescription('Follow these steps to get your API token and secret key from UEX Corp:')
+      .setColor(0x0099ff)
+      .addFields([
+        {
+          name: '📱 Step 1: Get API Token (Bearer Token)',
+          value: '1. Login to [UEX Corp](https://uexcorp.space)\n' +
+                 '2. Navigate to **"My Apps"** section\n' +
+                 '3. Create a new application or select existing one\n' +
+                 '4. Copy the **"Bearer Token"** from your application\n' +
+                 '5. This is your `api_token` for the bot',
+          inline: false
+        },
+        {
+          name: '🔐 Step 2: Get Secret Key',
+          value: '1. Go to **"Account Settings"** in your UEX profile\n' +
+                 '2. Find the **"Secret Key"** section\n' +
+                 '3. Generate a new key if you don\'t have one\n' +
+                 '4. Copy the secret key (keep it private!)\n' +
+                 '5. This is your `secret_key` for the bot',
+          inline: false
+        },
+        {
+          name: '✅ Step 3: Register with Bot',
+          value: '```\n/register api_token:YOUR_BEARER_TOKEN secret_key:YOUR_SECRET_KEY\n```\n' +
+                 '⚠️ **Important:** Use this command in DMs or private channels only!',
+          inline: false
+        },
+        {
+          name: '🔗 Need More Help?',
+          value: '• Use `/help` command for detailed instructions\n' +
+                 '• Use `/help topic:credentials` for step-by-step guide\n' +
+                 '• [Visit UEX Corp](https://uexcorp.space) to manage credentials',
+          inline: false
+        }
+      ])
+      .setFooter({ text: 'Need more help? Contact UEX Corp support' })
+      .setTimestamp();
+
+    await interaction.reply({ 
+      embeds: [helpEmbed], 
+      ephemeral: true 
+    });
+
+  } catch (error) {
+    logger.error('Help credentials button error', {
+      error: error.message,
+      userId: interaction.user.id
+    });
+
+    try {
+      const errorMessage = '❌ Failed to display help information.';
+      if (interaction.replied || interaction.deferred) {
+        await interaction.editReply({ content: errorMessage });
+      } else {
+        await interaction.reply({ content: errorMessage, ephemeral: true });
+      }
+    } catch (replyError) {
+      logger.error('Failed to send help button error reply', { error: replyError.message });
     }
   }
 }

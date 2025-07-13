@@ -3,7 +3,7 @@
  * Discord slash command for replying to UEX negotiations
  */
 
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const uexAPI = require('../handlers/uex-api');
 const logger = require('../utils/logger');
 const userManager = require('../utils/user-manager');
@@ -62,7 +62,7 @@ module.exports = {
             },
             {
               name: '🔑 Get API Keys',
-              value: 'Contact UEX Corp support to obtain your API credentials',
+              value: 'Get Bearer Token from UEX **My Apps** + Secret Key from **Account Settings**',
               inline: false
             },
             {
@@ -74,7 +74,19 @@ module.exports = {
           .setFooter({ text: 'UEX Discord Bot' })
           .setTimestamp();
 
-        await interaction.editReply({ embeds: [notRegisteredEmbed] });
+        const helpButton = new ActionRowBuilder()
+          .addComponents(
+            new ButtonBuilder()
+              .setCustomId('help_credentials')
+              .setLabel('📖 Get Help')
+              .setStyle(ButtonStyle.Primary)
+              .setEmoji('🔑')
+          );
+
+        await interaction.editReply({ 
+          embeds: [notRegisteredEmbed], 
+          components: [helpButton] 
+        });
         return;
       }
 
