@@ -142,7 +142,7 @@ Users need to obtain their UEX API credentials:
 ### 6.2 Register with Bot
 Each user registers their credentials with the bot:
 ```
-/register api_token:YOUR_UEX_TOKEN api_secret:YOUR_UEX_SECRET
+/register api_token:YOUR_UEX_TOKEN secret_key:YOUR_UEX_SECRET
 ```
 
 The bot will encrypt and store these credentials securely.
