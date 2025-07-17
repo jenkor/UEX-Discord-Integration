@@ -18,7 +18,7 @@ A comprehensive, self-hostable Discord bot for **UEX Corp marketplace trading an
 Ready to use Automatix? [**Invite Automatix to your Discord server**](https://discord.com/oauth2/authorize?client_id=1229684801213042708&permissions=2147551232&integration_type=0&scope=bot) and start trading on the UEX marketplace immediately!
 
 ### **🌍 Join Our Community Server**
-Want to try Automatix first? [**Join our Discord server**](https://discord.gg/WpWh495Fqc) where Automatix is already available and ready to use!
+Want to try Automatix first? [**Join our Discord server**](https://discord.gg/f36UX9bQG4) where Automatix is already available and ready to use!
 
 ## 🛒 Marketplace Features
 
